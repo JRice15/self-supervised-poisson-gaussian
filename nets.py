@@ -491,9 +491,9 @@ def blindspot_network(inputs):
 
     # make vertical blindspot network
     vert_input = Input([h,w,c])
-    # vert_output = _vertical_blindspot_network(vert_input)
-    # vert_model = Model(inputs=vert_input,outputs=vert_output)
-    vert_model = ResNet50(input_tensor=vert_input, input_shape=[h,w,c])
+    vert_output = _vertical_blindspot_network(vert_input)
+    vert_model = Model(inputs=vert_input,outputs=vert_output)
+    # vert_model = ResNet50(input_tensor=vert_input, input_shape=[h,w,c])
 
     # run vertical blindspot network on rotated inputs
     stacks = []
