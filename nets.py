@@ -334,8 +334,6 @@ def ResNet50(input_tensor,
     else:
         bn_axis = 1
 
-    print("1", img_input)
-
     x = ZeroPadding2D(padding=(3, 3), name='conv1_pad')(img_input)
     # x = Conv2D(64, (7, 7),
     #                   strides=(2, 2),
@@ -349,20 +347,14 @@ def ResNet50(input_tensor,
     # x = ZeroPadding2D(padding=(1, 1), name='pool1_pad')(x)
     # x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
-    print("2", x)
-
     x = conv_block(x, 3, [64, 64, 256], stage=2, block='a', strides=(1, 1))
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='b')
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='c')
-
-    print("3", x)
 
     x = conv_block(x, 3, [128, 128, 512], stage=3, block='a')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='b')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='c')
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='d')
-
-    print("4", x)
 
     x = conv_block(x, 3, [256, 256, 1024], stage=4, block='a')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='b')
@@ -371,13 +363,9 @@ def ResNet50(input_tensor,
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e')
     x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f')
 
-    print("5", x)
-
     x = conv_block(x, 3, [512, 512, 2048], stage=5, block='a')
     x = identity_block(x, 3, [512, 512, 2048], stage=5, block='b')
     x = identity_block(x, 3, [512, 512, 2048], stage=5, block='c')
-
-    print("6", x)
 
     if pooling is not None:
         if pooling == 'avg':
@@ -408,37 +396,26 @@ def _vertical_blindspot_network(x):
   skips = [x]
 
   n = x
-  print("0", n)
   n = _vshifted_conv(n, 48, 'enc_conv0')
   n = _vshifted_conv(n, 48, 'enc_conv1')
   n = _vshifted_pool(n)
   skips.append(n)
 
-  print("1", n)
-
   n = _vshifted_conv(n, 48, 'enc_conv2')
   n = _vshifted_pool(n)
   skips.append(n)
-
-  print("2", n)
 
   n = _vshifted_conv(n, 48, 'enc_conv3')
   n = _vshifted_pool(n)
   skips.append(n)
 
-  print("3", n)
-
   n = _vshifted_conv(n, 48, 'enc_conv4')
   n = _vshifted_pool(n)
   skips.append(n)
 
-  print("4", n)
-
   n = _vshifted_conv(n, 48, 'enc_conv5')
   n = _vshifted_pool(n)
   n = _vshifted_conv(n, 48, 'enc_conv6')
-
-  print("5", n)
 
   #-----------------------------------------------
   n = UpSampling2D(2)(n)
@@ -446,35 +423,25 @@ def _vertical_blindspot_network(x):
   n = _vshifted_conv(n, 96, 'dec_conv5')
   n = _vshifted_conv(n, 96, 'dec_conv5b')
 
-  print("6", n)
-
   n = UpSampling2D(2)(n)
   n = Concatenate(axis=3)([n, skips.pop()])
   n = _vshifted_conv(n, 96, 'dec_conv4')
   n = _vshifted_conv(n, 96, 'dec_conv4b')
-
-  print("7", n)
 
   n = UpSampling2D(2)(n)
   n = Concatenate(axis=3)([n, skips.pop()])
   n = _vshifted_conv(n, 96, 'dec_conv3')
   n = _vshifted_conv(n, 96, 'dec_conv3b')
 
-  print("8", n)
-
   n = UpSampling2D(2)(n)
   n = Concatenate(axis=3)([n, skips.pop()])
   n = _vshifted_conv(n, 96, 'dec_conv2')
   n = _vshifted_conv(n, 96, 'dec_conv2b')
 
-  print("9", n)
-
   n = UpSampling2D(2)(n)
   n = Concatenate(axis=3)([n, skips.pop()])
   n = _vshifted_conv(n, 96, 'dec_conv1a')
   n = _vshifted_conv(n, 96, 'dec_conv1b')
-
-  print("10", n)
 
   # final pad and crop for blind spot
   n = ZeroPadding2D([[1,0],[0,0]])(n)
