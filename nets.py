@@ -142,16 +142,16 @@ def _conv(x, num_filters, name):
   return x
 
 def _vshifted_conv(x, num_filters, name):
-  """ Vertically shifted convolution """
-  filter_size = [3,3]
-  k = filter_size[0]//2
+    """ Vertically shifted convolution """
+    filter_size = [3,3]
+    k = filter_size[0]//2
 
-  x = ZeroPadding2D([[k,0],[0,0]])(x)
-  x = Conv2D(filters=num_filters, kernel_size=filter_size, padding='same', kernel_initializer='he_normal', name=name)(x)
-  x = LeakyReLU(0.1)(x)
-  x = Cropping2D([[0,k],[0,0]])(x)
+    x = ZeroPadding2D([[k,0],[0,0]])(x)
+    x = Conv2D(filters=num_filters, kernel_size=filter_size, padding='same', kernel_initializer='he_normal', name=name)(x)
+    x = LeakyReLU(0.1)(x)
+    x = Cropping2D([[0,k],[0,0]])(x)
 
-  return x
+    return x
 
 def _pool(x):
   """ max pooling"""
@@ -169,6 +169,10 @@ def _vshifted_pool(x):
   return x
 
 
+"""
+keras resnet50
+https://github.com/keras-team/keras-applications/blob/master/keras_applications/resnet50.py
+"""
 
 def identity_block(input_tensor, kernel_size, filters, stage, block):
     """The identity block is the block that has no conv layer at shortcut.
@@ -334,13 +338,13 @@ def ResNet50(input_tensor,
     else:
         bn_axis = 1
 
-    x = ZeroPadding2D(padding=(3, 3), name='conv1_pad')(img_input)
+    # x = ZeroPadding2D(padding=(3, 3), name='conv1_pad')(img_input)
     # x = Conv2D(64, (7, 7),
     #                   strides=(2, 2),
     #                   padding='valid',
     #                   kernel_initializer='he_normal',
     #                   name='conv1')(x)
-    x = _vshifted_conv(x, 48, 'conv1')
+    x = _vshifted_conv(img_input, 48, 'conv1')
 
     x = BatchNormalization(axis=bn_axis, name='bn_conv1')(x)
     x = Activation('relu')(x)
@@ -458,9 +462,9 @@ def blindspot_network(inputs):
 
     # make vertical blindspot network
     vert_input = Input([h,w,c])
-    vert_output = _vertical_blindspot_network(vert_input)
-    vert_model = Model(inputs=vert_input,outputs=vert_output)
-    # vert_model = ResNet50(input_tensor=vert_input, input_shape=[h,w,c])
+    # vert_output = _vertical_blindspot_network(vert_input)
+    # vert_model = Model(inputs=vert_input,outputs=vert_output)
+    vert_model = ResNet50(input_tensor=vert_input, input_shape=[h,w,c])
 
     # run vertical blindspot network on rotated inputs
     stacks = []
