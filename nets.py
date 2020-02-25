@@ -371,6 +371,10 @@ def ResNet50(input_tensor,
     x = identity_block(x, 3, [96, 96, 96], stage=5, block='b')
     x = identity_block(x, 3, [96, 96, 96], stage=5, block='c')
 
+    # final pad and crop for blind spot
+    x = ZeroPadding2D([[1,0],[0,0]])(x)
+    x = Cropping2D([[0,1],[0,0]])(x)
+
     if pooling is not None:
         if pooling == 'avg':
             x = GlobalAveragePooling2D()(x)
