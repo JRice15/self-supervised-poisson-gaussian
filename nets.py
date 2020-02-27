@@ -148,7 +148,6 @@ def _vshifted_conv(x, num_filters, name):
 
     x = ZeroPadding2D([[k,0],[0,0]])(x)
     x = Conv2D(filters=num_filters, kernel_size=filter_size, padding='same', kernel_initializer='he_normal', name=name)(x)
-    x = LeakyReLU(0.1)(x)
     x = Cropping2D([[0,k],[0,0]])(x)
 
     return x
@@ -194,26 +193,26 @@ def identity_block(input_tensor, kernel_size, filters, stage, block):
     conv_name_base = 'res' + str(stage) + block + '_branch'
     bn_name_base = 'bn' + str(stage) + block + '_branch'
 
-    # x = Conv2D(filters1, (1, 1),
-    #                   kernel_initializer='he_normal',
-    #                   name=conv_name_base + '2a')(input_tensor)
-    x = _vshifted_conv(input_tensor, filters1, conv_name_base + '2a')
-    x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
-    x = Activation('relu')(x)
+    x = Conv2D(filters1, (1, 1),
+                      kernel_initializer='he_normal',
+                      name=conv_name_base + '2a')(input_tensor)
+    # x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
+    # x = Activation('relu')(x)
+    x = LeakyReLU(0.1)(x)
 
     # x = Conv2D(filters2, kernel_size,
     #                   padding='same',
     #                   kernel_initializer='he_normal',
     #                   name=conv_name_base + '2b')(x)
     x = _vshifted_conv(x, filters2, conv_name_base + '2b')
-    x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2b')(x)
-    x = Activation('relu')(x)
+    # x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2b')(x)
+    # x = Activation('relu')(x)
+    x = LeakyReLU(0.1)(x)
 
-    # x = Conv2D(filters3, (1, 1),
-    #                   kernel_initializer='he_normal',
-    #                   name=conv_name_base + '2c')(x)
-    x = _vshifted_conv(x, filters3, conv_name_base + '2c')
-    x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
+    x = Conv2D(filters3, (1, 1),
+                      kernel_initializer='he_normal',
+                      name=conv_name_base + '2c')(x)
+    # x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
 
     x = add([x, input_tensor])
     x = Activation('relu')(x)
@@ -249,32 +248,31 @@ def conv_block(input_tensor,
     conv_name_base = 'res' + str(stage) + block + '_branch'
     bn_name_base = 'bn' + str(stage) + block + '_branch'
 
-    # x = Conv2D(filters1, (1, 1), strides=strides,
-    #                   kernel_initializer='he_normal',
-    #                   name=conv_name_base + '2a')(input_tensor)
-    x = _vshifted_conv(input_tensor, filters1, conv_name_base + '2a')
-    x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
-    x = Activation('relu')(x)
+    x = Conv2D(filters1, (1, 1), strides=strides,
+                      kernel_initializer='he_normal',
+                      name=conv_name_base + '2a')(input_tensor)
+    # x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
+    # x = Activation('relu')(x)
+    x = LeakyReLU(0.1)(x)
 
     # x = Conv2D(filters2, kernel_size, padding='same',
     #                   kernel_initializer='he_normal',
     #                   name=conv_name_base + '2b')(x)
     x = _vshifted_conv(x, filters2, conv_name_base + '2b')
-    x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2b')(x)
-    x = Activation('relu')(x)
+    # x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2b')(x)
+    # x = Activation('relu')(x)
+    x = LeakyReLU(0.1)(x)
 
-    # x = Conv2D(filters3, (1, 1),
-    #                   kernel_initializer='he_normal',
-    #                   name=conv_name_base + '2c')(x)
-    x = _vshifted_conv(x, filters3, conv_name_base + '2c')
-    x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
+    x = Conv2D(filters3, (1, 1),
+                      kernel_initializer='he_normal',
+                      name=conv_name_base + '2c')(x)
+    # x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
 
-    # shortcut = Conv2D(filters3, (1, 1), strides=strides,
-    #                          kernel_initializer='he_normal',
-    #                          name=conv_name_base + '1')(input_tensor)
-    shortcut = _vshifted_conv(input_tensor, filters3, conv_name_base + '1')
-    shortcut = BatchNormalization(
-        axis=bn_axis, name=bn_name_base + '1')(shortcut)
+    shortcut = Conv2D(filters3, (1, 1), strides=strides,
+                             kernel_initializer='he_normal',
+                             name=conv_name_base + '1')(input_tensor)
+    # shortcut = BatchNormalization(
+    #     axis=bn_axis, name=bn_name_base + '1')(shortcut)
 
     x = add([x, shortcut])
     x = Activation('relu')(x)
