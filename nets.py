@@ -173,12 +173,10 @@ keras resnet50
 https://github.com/keras-team/keras-applications/blob/master/keras_applications/resnet50.py
 """
 
-def identity_block(input_tensor, kernel_size, filters, stage, block):
+def identity_block(input_tensor, filters, stage, block):
     """The identity block is the block that has no conv layer at shortcut.
     # Arguments
         input_tensor: input tensor
-        kernel_size: default 3, the kernel size of
-            middle conv layer at main path
         filters: list of integers, the filters of 3 conv layer at main path
         stage: integer, current stage label, used for generating layer names
         block: 'a','b'..., current block label, used for generating layer names
@@ -220,19 +218,15 @@ def identity_block(input_tensor, kernel_size, filters, stage, block):
 
 
 def conv_block(input_tensor,
-               kernel_size,
                filters,
                stage,
                block):
     """A block that has a conv layer at shortcut.
     # Arguments
         input_tensor: input tensor
-        kernel_size: default 3, the kernel size of
-            middle conv layer at main path
         filters: list of integers, the filters of 3 conv layer at main path
         stage: integer, current stage label, used for generating layer names
         block: 'a','b'..., current block label, used for generating layer names
-        strides: Strides for the first conv layer in the block.
     # Returns
         Output tensor for the block.
     Note that from stage 3,
@@ -286,8 +280,6 @@ def ResNet50(input_tensor,
     Note that the data format convention used by the model is
     the one specified in your Keras config at `~/.keras/keras.json`.
     # Arguments
-        include_top: whether to include the fully-connected
-            layer at the top of the network.
         weights: one of `None` (random initialization),
               'imagenet' (pre-training on ImageNet),
               or the path to the weights file to be loaded.
@@ -342,32 +334,32 @@ def ResNet50(input_tensor,
     #                   kernel_initializer='he_normal',
     #                   name='conv1')(x)
     x = _vshifted_conv(img_input, 48, 'conv1')
+    x = LeakyReLU(0.1)(x)
 
     # x = BatchNormalization(axis=bn_axis, name='bn_conv1')(x)
     # x = Activation('relu')(x)
-    x = LeakyReLU(0.1)(x)
     # x = ZeroPadding2D(padding=(1, 1), name='pool1_pad')(x)
     # x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
-    x = conv_block(x, 3, [48, 48, 48], stage=2, block='a', strides=(1, 1))
-    x = identity_block(x, 3, [48, 48, 48], stage=2, block='b')
-    x = identity_block(x, 3, [48, 48, 48], stage=2, block='c')
+    x = conv_block(x, [48, 48, 48], stage=2, block='a')
+    x = identity_block(x, [48, 48, 48], stage=2, block='b')
+    x = identity_block(x, [48, 48, 48], stage=2, block='c')
 
-    x = conv_block(x, 3, [48, 48, 48], stage=3, block='a')
-    x = identity_block(x, 3, [48, 48, 48], stage=3, block='b')
-    x = identity_block(x, 3, [48, 48, 48], stage=3, block='c')
-    x = identity_block(x, 3, [48, 48, 48], stage=3, block='d')
+    x = conv_block(x, [48, 48, 48], stage=3, block='a')
+    x = identity_block(x, [48, 48, 48], stage=3, block='b')
+    x = identity_block(x, [48, 48, 48], stage=3, block='c')
+    x = identity_block(x, [48, 48, 48], stage=3, block='d')
 
-    x = conv_block(x, 3, [48, 48, 48], stage=4, block='a')
-    x = identity_block(x, 3, [48, 48, 48], stage=4, block='b')
-    x = identity_block(x, 3, [48, 48, 48], stage=4, block='c')
-    x = identity_block(x, 3, [48, 48, 48], stage=4, block='d')
-    x = identity_block(x, 3, [48, 48, 48], stage=4, block='e')
-    x = identity_block(x, 3, [48, 48, 48], stage=4, block='f')
+    x = conv_block(x, [48, 48, 48], stage=4, block='a')
+    x = identity_block(x, [48, 48, 48], stage=4, block='b')
+    x = identity_block(x, [48, 48, 48], stage=4, block='c')
+    x = identity_block(x, [48, 48, 48], stage=4, block='d')
+    x = identity_block(x, [48, 48, 48], stage=4, block='e')
+    x = identity_block(x, [48, 48, 48], stage=4, block='f')
 
-    x = conv_block(x, 3, [96, 96, 96], stage=5, block='a')
-    x = identity_block(x, 3, [96, 96, 96], stage=5, block='b')
-    x = identity_block(x, 3, [96, 96, 96], stage=5, block='c')
+    x = conv_block(x, [96, 96, 96], stage=5, block='a')
+    x = identity_block(x, [96, 96, 96], stage=5, block='b')
+    x = identity_block(x, [96, 96, 96], stage=5, block='c')
 
     # final pad and crop for blind spot
     x = ZeroPadding2D([[1,0],[0,0]])(x)
