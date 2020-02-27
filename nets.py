@@ -223,8 +223,7 @@ def conv_block(input_tensor,
                kernel_size,
                filters,
                stage,
-               block,
-               strides=(2, 2)):
+               block):
     """A block that has a conv layer at shortcut.
     # Arguments
         input_tensor: input tensor
@@ -248,7 +247,7 @@ def conv_block(input_tensor,
     conv_name_base = 'res' + str(stage) + block + '_branch'
     bn_name_base = 'bn' + str(stage) + block + '_branch'
 
-    x = Conv2D(filters1, (1, 1), strides=strides,
+    x = Conv2D(filters1, (1, 1), strides=1,
                       kernel_initializer='he_normal',
                       name=conv_name_base + '2a')(input_tensor)
     # x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
@@ -268,7 +267,7 @@ def conv_block(input_tensor,
                       name=conv_name_base + '2c')(x)
     # x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
 
-    shortcut = Conv2D(filters3, (1, 1), strides=strides,
+    shortcut = Conv2D(filters3, (1, 1), strides=1,
                              kernel_initializer='he_normal',
                              name=conv_name_base + '1')(input_tensor)
     # shortcut = BatchNormalization(
