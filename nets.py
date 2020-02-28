@@ -274,15 +274,11 @@ def conv_block(input_tensor,
 
 def ResNet50(input_tensor,
              input_shape,
-             weights=None,
              pooling=None):
     """Instantiates the ResNet50 architecture.
     Note that the data format convention used by the model is
     the one specified in your Keras config at `~/.keras/keras.json`.
     # Arguments
-        weights: one of `None` (random initialization),
-              'imagenet' (pre-training on ImageNet),
-              or the path to the weights file to be loaded.
         input_tensor: optional Keras tensor (i.e. output of `layers.Input()`)
             to use as image input for the model.
         input_shape: optional shape tuple, only to be specified
@@ -309,11 +305,6 @@ def ResNet50(input_tensor,
             or invalid input shape.
     """
 
-    if not (weights is None or os.path.exists(weights)):
-        raise ValueError('The `weights` argument should be either '
-                         '`None` (random initialization), '
-                         'or the path to the weights file to be loaded.')
-
     if input_tensor is None:
         img_input = Input(shape=input_shape)
     else:
@@ -333,9 +324,12 @@ def ResNet50(input_tensor,
     #                   padding='valid',
     #                   kernel_initializer='he_normal',
     #                   name='conv1')(x)
-    x = _vshifted_conv(img_input, 48, 'conv1')
-    x = BatchNormalization(axis=bn_axis, name='bn_conv1')(x)
     # x = Activation('relu')(x)
+    x = _vshifted_conv(img_input, 48, 'conv1a')
+    x = BatchNormalization(axis=bn_axis, name='bn_conv1a')(x)
+    x = LeakyReLU(0.1)(x)
+    x = _vshifted_conv(x, 48, 'conv1b')
+    x = BatchNormalization(axis=bn_axis, name='bn_conv1b')(x)
     x = LeakyReLU(0.1)(x)
 
     # x = ZeroPadding2D(padding=(1, 1), name='pool1_pad')(x)
@@ -377,10 +371,6 @@ def ResNet50(input_tensor,
     
     # Create model
     model = Model(inputs, x, name='resnet50')
-
-    # Load weights
-    if weights is not None:
-        model.load_weights(weights)
 
     return model
 
