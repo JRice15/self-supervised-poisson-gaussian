@@ -344,16 +344,16 @@ def ResNet50(input_tensor,
     x = identity_block(x, [48, 48, 48], stage=3, block='c')
     x = identity_block(x, [48, 48, 48], stage=3, block='d')
 
-    x = conv_block(x, [48, 48, 48], stage=4, block='a')
-    x = identity_block(x, [48, 48, 48], stage=4, block='b')
-    x = identity_block(x, [48, 48, 48], stage=4, block='c')
-    x = identity_block(x, [48, 48, 48], stage=4, block='d')
-    x = identity_block(x, [48, 48, 48], stage=4, block='e')
-    x = identity_block(x, [48, 48, 48], stage=4, block='f')
+    x = conv_block(x, [96, 96, 96], stage=4, block='a')
+    x = identity_block(x, [96, 96, 96], stage=4, block='b')
+    x = identity_block(x, [96, 96, 96], stage=4, block='c')
+    x = identity_block(x, [96, 96, 96], stage=4, block='d')
+    x = identity_block(x, [96, 96, 96], stage=4, block='e')
+    x = identity_block(x, [96, 96, 96], stage=4, block='f')
 
-    x = conv_block(x, [96, 96, 96], stage=5, block='a')
-    x = identity_block(x, [96, 96, 96], stage=5, block='b')
-    x = identity_block(x, [96, 96, 96], stage=5, block='c')
+    x = conv_block(x, [192, 192, 192], stage=5, block='a')
+    x = identity_block(x, [192, 192, 192], stage=5, block='b')
+    x = identity_block(x, [192, 192, 192], stage=5, block='c')
 
     # final pad and crop for blind spot
     x = ZeroPadding2D([[1,0],[0,0]])(x)
