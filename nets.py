@@ -331,7 +331,7 @@ def ResNet50(input_tensor,
     # x = _vshifted_conv(x, 48, 'conv1b')
     # x = BatchNormalization(axis=bn_axis, name='bn_conv1b')(x)
     # x = LeakyReLU(0.1)(x)
-    x = conv_block(img_input, [96, 96, 96], stage=1, block='a')
+    x = conv_block(img_input, [48, 48, 96], stage=1, block='a')
 
     # x = ZeroPadding2D(padding=(1, 1), name='pool1_pad')(x)
     # x = MaxPooling2D((3, 3), strides=(2, 2))(x)
