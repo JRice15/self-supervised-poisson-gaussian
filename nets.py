@@ -335,9 +335,9 @@ def ResNet50(input_tensor,
     # x = ZeroPadding2D(padding=(1, 1), name='pool1_pad')(x)
     # x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
-    x = conv_block(img_input, [96, 96, 192], stage=2, block='a')
-    x = identity_block(x, [96, 96, 192], stage=2, block='b')
-    x = identity_block(x, [96, 96, 192], stage=2, block='c')
+    x = conv_block(img_input, [48, 48, 96], stage=2, block='a')
+    x = identity_block(x, [48, 48, 96], stage=2, block='b')
+    x = identity_block(x, [48, 48, 96], stage=2, block='c')
 
     x = conv_block(x, [96, 96, 192], stage=3, block='a')
     x = identity_block(x, [96, 96, 192], stage=3, block='b')
