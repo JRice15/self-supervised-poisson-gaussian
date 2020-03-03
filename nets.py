@@ -331,19 +331,18 @@ def ResNet50(input_tensor,
     # x = _vshifted_conv(x, 48, 'conv1b')
     # x = BatchNormalization(axis=bn_axis, name='bn_conv1b')(x)
     # x = LeakyReLU(0.1)(x)
-    x = conv_block(img_input, [96, 96, 96], stage=1, block='a')
 
     # x = ZeroPadding2D(padding=(1, 1), name='pool1_pad')(x)
     # x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
-    x = conv_block(x, [48, 48, 96], stage=2, block='a')
-    x = identity_block(x, [48, 48, 96], stage=2, block='b')
-    x = identity_block(x, [48, 48, 96], stage=2, block='c')
+    x = conv_block(img_input, [96, 96, 192], stage=2, block='a')
+    x = identity_block(x, [96, 96, 192], stage=2, block='b')
+    x = identity_block(x, [96, 96, 192], stage=2, block='c')
 
-    x = conv_block(x, [48, 48, 96], stage=3, block='a')
-    x = identity_block(x, [48, 48, 96], stage=3, block='b')
-    x = identity_block(x, [48, 48, 96], stage=3, block='c')
-    x = identity_block(x, [48, 48, 96], stage=3, block='d')
+    x = conv_block(x, [96, 96, 192], stage=3, block='a')
+    x = identity_block(x, [96, 96, 192], stage=3, block='b')
+    x = identity_block(x, [96, 96, 192], stage=3, block='c')
+    x = identity_block(x, [96, 96, 192], stage=3, block='d')
 
     x = conv_block(x, [96, 96, 192], stage=4, block='a')
     x = identity_block(x, [96, 96, 192], stage=4, block='b')
