@@ -300,9 +300,6 @@ def ResNet50(input_tensor,
                 be applied.
     # Returns
         A Keras model instance.
-    # Raises
-        ValueError: in case of invalid argument for `weights`,
-            or invalid input shape.
     """
 
     if input_tensor is None:
@@ -325,7 +322,7 @@ def ResNet50(input_tensor,
     #                   kernel_initializer='he_normal',
     #                   name='conv1')(x)
     # x = Activation('relu')(x)
-    x = _vshifted_conv(img_input, 96, 'conv1a')
+    x = _vshifted_conv(img_input, 48, 'conv1a')
     x = BatchNormalization(axis=bn_axis, name='bn_conv1a')(x)
     x = LeakyReLU(0.1)(x)
     # x = _vshifted_conv(x, 48, 'conv1b')
