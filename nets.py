@@ -4,7 +4,8 @@ from keras.models import Model
 from keras.layers import (Input, Lambda, Conv2D, LeakyReLU, UpSampling2D, 
                         MaxPooling2D, ZeroPadding2D, Cropping2D, Concatenate, 
                         Reshape, GlobalAveragePooling2D, BatchNormalization, 
-                        Add, Subtract, add, Activation, GlobalMaxPooling2D)
+                        Add, Subtract, add, Activation, GlobalMaxPooling2D,
+                        Softmax)
 from keras.initializers import Constant
 import keras.backend as K
 import tensorflow as tf
@@ -471,7 +472,8 @@ def blindspot_network(inputs):
     
     return x
 
-def gaussian_blindspot_network(input_shape,mode,reg_weight=0):
+
+def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     """ Create a variant of the Gaussian blindspot newtork.
         input_shape: Shape of input image
         mode: mse, uncalib, global, perpixel, poisson
@@ -481,18 +483,23 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0):
               poisson          -- Poisson noise
               poissongaussian  -- Poisson-Gaussian noise
         reg_weight: strength of regularization on prior std. dev.
+        components: number of mixture components (distributions)
     """ 
     # create input layer
     inputs = Input(input_shape)
   
     # run blindspot network
     x = blindspot_network(inputs)
-    
+
     # get prior parameters
-    loc = Conv2D(1, 1, kernel_initializer='he_normal', name='loc')(x)
+    loc = Conv2D(components, 1, kernel_initializer='he_normal', name='loc')(x)
     if mode != 'mse':
-        std = Conv2D(1, 1, kernel_initializer='he_normal', name='std')(x)
-    
+        std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
+    if mode == "uncalib":
+        # mixture coefficient
+        a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
+        a = Softmax()(x)
+
     # get noise variance
     if mode == 'mse':
         pass
@@ -511,10 +518,10 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0):
     if mode == 'mse':
         outputs = loc
     elif mode == 'uncalib':
-        outputs = [loc,std]
+        outputs = [loc,std,a]
     else:
         outputs = Lambda(lambda x:gaussian_posterior_mean(*x))([inputs,loc,std,noise_std])
-  
+
     # create model
     model = Model(inputs=inputs,outputs=outputs)
   

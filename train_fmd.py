@@ -36,8 +36,12 @@ parser.add_argument('--batch',type=int,default=4,help='batch size')
 parser.add_argument('--epoch',type=int,default=300,help='num epochs')
 parser.add_argument('--steps',type=int,default=50,help='steps per epoch')
 parser.add_argument('--lr',type=float,default=0.0003,help='learning rate')
+parser.add_argument('--components',type=int,default=1,help='number of mixture components')
 
 args = parser.parse_args()
+
+if args.components != 1 and args.mode != "uncalib":
+    raise ValueError("Components != 1 must be used with mode uncalib")    
 
 """ Load dataset """
 
@@ -89,7 +93,7 @@ def random_crop_generator(data, crop_size, batch_size):
 from keras.optimizers import Adam, SGD
 from keras.callbacks import LambdaCallback, ModelCheckpoint, ReduceLROnPlateau
 
-model = gaussian_blindspot_network((args.crop, args.crop, 1),args.mode,args.reg)
+model = gaussian_blindspot_network((args.crop, args.crop, 1),args.mode,args.reg,args.components)
 
 model.compile(optimizer=Adam(args.lr))
 
