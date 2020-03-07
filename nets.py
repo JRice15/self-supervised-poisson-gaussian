@@ -388,8 +388,6 @@ def ResNet50(input_tensor,
     return model
 
 
-
-
 def _vertical_blindspot_network(x):
   """ Blind-spot network; adapted from noise2noise GitHub
     Each row of output only sees input pixels above that row
@@ -512,11 +510,8 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
         std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
     if mode == "uncalib":
         # mixture coefficient
-        if components != 1:
-            a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
-            a = Softmax()(x)
-        else:
-            a = Constant(1.0)
+        a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
+        a = Softmax()(x)
 
     # get noise variance
     if mode == 'mse':
