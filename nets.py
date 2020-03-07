@@ -511,7 +511,7 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     if mode == "uncalib":
         # mixture coefficient
         a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
-        a = Softmax()(x)
+        a = Softmax()(a)
 
     # get noise variance
     if mode == 'mse':
