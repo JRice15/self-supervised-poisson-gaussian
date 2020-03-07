@@ -103,6 +103,21 @@ def uncalib_gaussian_loss(y,loc,std):
     loss = (y-loc)**2 / total_var + tf.log(total_var)
     return K.mean(loss)
 
+def uncalib_gaussian_mixture_loss(y,loc,std,a):
+    """ Uncalibrated mixture of Gaussians loss function
+        Model noisy data using a mixture of Gaussians parameterized by mean
+        and std. dev, weighted by mixture coefficient 'a'
+        Parameters:
+            loc: mean
+            std: std. dev.
+            a: mixture coefficient
+    """
+    var = std**2
+    total_var = var+1e-3
+    loss = (y-loc)**2 / total_var + tf.log(total_var)
+    loss = a * loss
+    return K.mean(loss)
+
 def gaussian_loss(y,loc,std,noise_std,reg_weight):
     """ Gaussian loss function
         Model noisy data using a Gaussian prior and Gaussian noise model
@@ -444,9 +459,9 @@ def blindspot_network(inputs):
 
     # make vertical blindspot network
     vert_input = Input([h,w,c])
-    # vert_output = _vertical_blindspot_network(vert_input)
-    # vert_model = Model(inputs=vert_input,outputs=vert_output)
-    vert_model = ResNet50(input_tensor=vert_input, input_shape=[h,w,c])
+    vert_output = _vertical_blindspot_network(vert_input)
+    vert_model = Model(inputs=vert_input,outputs=vert_output)
+    # vert_model = ResNet50(input_tensor=vert_input, input_shape=[h,w,c])
 
     # run vertical blindspot network on rotated inputs
     stacks = []
@@ -483,7 +498,7 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
               poisson          -- Poisson noise
               poissongaussian  -- Poisson-Gaussian noise
         reg_weight: strength of regularization on prior std. dev.
-        components: number of mixture components (distributions)
+        components: number of mixture components (distributions) for each pixel
     """ 
     # create input layer
     inputs = Input(input_shape)
@@ -497,8 +512,11 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
         std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
     if mode == "uncalib":
         # mixture coefficient
-        a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
-        a = Softmax()(x)
+        if components != 1:
+            a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
+            a = Softmax()(x)
+        else:
+            a = Constant(1.0)
 
     # get noise variance
     if mode == 'mse':
@@ -530,7 +548,7 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     if mode == 'mse':
         loss = mse_loss(inputs,loc)
     elif mode == 'uncalib':
-        loss = uncalib_gaussian_loss(inputs,loc,std)
+        loss = uncalib_gaussian_mixture_loss(inputs, loc, std, a)
     else:
         loss = gaussian_loss(inputs,loc,std,noise_std,reg_weight)
     model.add_loss(loss)
