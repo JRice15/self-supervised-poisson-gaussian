@@ -116,7 +116,9 @@ def uncalib_gaussian_mixture_loss(y,loc,std,a):
     total_var = var+1e-3
     loss = (y-loc)**2 / total_var + tf.log(total_var)
     loss = a * loss
-    return K.mean(loss)
+    # average loss in each channel, sum channels' losses
+    loss = K.mean(K.mean(loss, axis=0), axis=0)
+    return K.sum(loss)
 
 def gaussian_loss(y,loc,std,noise_std,reg_weight):
     """ Gaussian loss function
