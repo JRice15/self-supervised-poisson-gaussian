@@ -5,10 +5,11 @@ from keras.layers import (Input, Lambda, Conv2D, LeakyReLU, UpSampling2D,
                         MaxPooling2D, ZeroPadding2D, Cropping2D, Concatenate, 
                         Reshape, GlobalAveragePooling2D, BatchNormalization, 
                         Add, Subtract, add, Activation, GlobalMaxPooling2D,
-                        Softmax)
+                        Softmax, ReLU)
 from keras.initializers import Constant
 import keras.backend as K
 import tensorflow as tf
+import tensorflow_probability as tfp
 
 from keras.layers import Layer
 
@@ -104,21 +105,27 @@ def uncalib_gaussian_loss(y,loc,std):
     return K.mean(loss)
 
 def uncalib_gaussian_mixture_loss(y,loc,std,a):
-    """ Uncalibrated mixture of Gaussians loss function
-        Model noisy data using a mixture of Gaussians parameterized by mean
-        and std. dev, weighted by mixture coefficient 'a'
+    """ Negative log likelihood from mixture of Gaussians
         Parameters:
-            loc: mean
-            std: std. dev.
-            a: mixture coefficient
+            y: inputs
     """
-    var = std**2
-    total_var = var+1e-3
-    loss = (y-loc)**2 / total_var + tf.log(total_var)
-    loss = a * loss
-    # average loss in each channel, sum channels' losses
-    loss = K.mean(K.mean(loss, axis=0), axis=0)
-    return K.sum(loss)
+    # cannot be zero
+    std += 1e5
+    mixture = tfp.distributions.MixtureSameFamily(
+        mixture_distribution=tfp.distributions.Categorical(a),
+        components_distribution=tfp.distributions.Normal(
+            loc=loc,
+            scale=std,
+            validate_args=True,
+            allow_nan_stats=False
+        )
+    )
+    print("\n", mixture, y, "\n")
+    y = tf.squeeze(y, axis=-1)
+    print("\n", mixture, y, "\n")
+    log_likelihood = mixture.log_prob(y, name="log_prob")
+    print("\n", mixture, y, "\n")
+    return -K.mean(log_likelihood)
 
 def gaussian_loss(y,loc,std,noise_std,reg_weight):
     """ Gaussian loss function
@@ -484,7 +491,7 @@ def blindspot_network(inputs):
 
     x = Conv2D(96, 1, kernel_initializer='he_normal', name='conv1x1_2')(x)
     x = LeakyReLU(0.1)(x)
-    
+
     return x
 
 
@@ -510,6 +517,8 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     loc = Conv2D(components, 1, kernel_initializer='he_normal', name='loc')(x)
     if mode != 'mse':
         std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
+        # cannot be negative
+        std = ReLU(name="std-relu")(std)
     if mode == "uncalib":
         # mixture coefficient
         a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
@@ -539,13 +548,13 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
 
     # create model
     model = Model(inputs=inputs,outputs=outputs)
-  
+
     # create loss function
     # input is evaluated against output distribution
     if mode == 'mse':
         loss = mse_loss(inputs,loc)
     elif mode == 'uncalib':
-        loss = uncalib_gaussian_mixture_loss(inputs, loc, std, a)
+        loss = uncalib_gaussian_mixture_loss(inputs,loc,std,a)
     else:
         loss = gaussian_loss(inputs,loc,std,noise_std,reg_weight)
     model.add_loss(loss)
