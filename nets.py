@@ -109,10 +109,8 @@ def uncalib_gaussian_mixture_loss(y,loc,std,a):
         Parameters:
             y: inputs
     """
-    # cannot be zero
-    std += 1e5
     mixture = tfp.distributions.MixtureSameFamily(
-        mixture_distribution=tfp.distributions.Categorical(a),
+        mixture_distribution=tfp.distributions.Categorical(a, validate_args=True),
         components_distribution=tfp.distributions.Normal(
             loc=loc,
             scale=std,
@@ -120,12 +118,9 @@ def uncalib_gaussian_mixture_loss(y,loc,std,a):
             allow_nan_stats=False
         )
     )
-    print("\n", mixture, y, "\n")
     y = tf.squeeze(y, axis=-1)
-    print("\n", mixture, y, "\n")
     log_likelihood = mixture.log_prob(y, name="log_prob")
-    print("\n", mixture, y, "\n")
-    return -K.mean(log_likelihood)
+    return -K.sum(log_likelihood)
 
 def gaussian_loss(y,loc,std,noise_std,reg_weight):
     """ Gaussian loss function
@@ -519,7 +514,9 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
         std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
         # cannot be negative
         std = ReLU(name="std-relu")(std)
-    if mode == "uncalib":
+        # cannot be zero either
+        std = Lambda(lambda std: std + 1e4)(std)
+=    if mode == "uncalib":
         # mixture coefficient
         a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
         a = Softmax()(a)
