@@ -120,7 +120,7 @@ def uncalib_gaussian_mixture_loss(y,loc,std,a):
     )
     y = tf.squeeze(y, axis=-1)
     log_likelihood = mixture.log_prob(y, name="log_prob")
-    return -K.sum(log_likelihood)
+    return -K.mean(log_likelihood)
 
 def gaussian_loss(y,loc,std,noise_std,reg_weight):
     """ Gaussian loss function
@@ -515,7 +515,7 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
         # cannot be negative
         std = ReLU(name="std-relu")(std)
         # cannot be zero either
-        std = Lambda(lambda std: std + 1e4)(std)
+        std = Lambda(lambda std: std + 1e-5)(std)
     if mode == "uncalib":
         # mixture coefficient
         a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
