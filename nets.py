@@ -108,6 +108,9 @@ def uncalib_gaussian_mixture_loss(y,loc,std,a):
     """ Negative log likelihood from mixture of Gaussians
         Parameters:
             y: inputs
+            loc: means
+            std: standard devs
+            a: mixture coefficients
     """
     mixture = tfp.distributions.MixtureSameFamily(
         mixture_distribution=tfp.distributions.Categorical(a, validate_args=True),
@@ -116,11 +119,12 @@ def uncalib_gaussian_mixture_loss(y,loc,std,a):
             scale=std,
             validate_args=True,
             allow_nan_stats=False
-        )
+        ),
+        name="mixture"
     )
-    y = tf.squeeze(y, axis=-1)
+    y = K.squeeze(y, axis=-1)
     log_likelihood = mixture.log_prob(y, name="log_prob")
-    return -K.mean(log_likelihood)
+    return -K.mean(log_likelihood, name="positive loss")
 
 def gaussian_loss(y,loc,std,noise_std,reg_weight):
     """ Gaussian loss function
@@ -511,15 +515,16 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     # get prior parameters
     loc = Conv2D(components, 1, kernel_initializer='he_normal', name='loc')(x)
     if mode != 'mse':
+        # standard deviation
         std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
         # cannot be negative
         std = ReLU(name="std-relu")(std)
         # cannot be zero either
-        std = Lambda(lambda std: std + 1e-5)(std)
-    if mode == "uncalib":
+        std = Lambda(lambda std: std + 1e-5, name="std-lambda")(std)
+    if components > 1:
         # mixture coefficient
         a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
-        a = Softmax()(a)
+        a = Softmax(name="a-softmax")(a)
 
     # get noise variance
     if mode == 'mse':
@@ -551,7 +556,10 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     if mode == 'mse':
         loss = mse_loss(inputs,loc)
     elif mode == 'uncalib':
-        loss = uncalib_gaussian_mixture_loss(inputs,loc,std,a)
+        if components == 1:
+            loss = uncalib_gaussian_loss(inputs, loc, std)
+        else:
+            loss = uncalib_gaussian_mixture_loss(inputs,loc,std,a)
     else:
         loss = gaussian_loss(inputs,loc,std,noise_std,reg_weight)
     model.add_loss(loss)
