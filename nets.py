@@ -517,9 +517,11 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     if mode != 'mse':
         # standard deviation
         std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
-        # cannot be negative or zero
-        std = Lambda(lambda std: K.softplus(std) + 1e-5, name="std-lambda")(std)
-    if mode == "uncalib":
+        if components != 1:
+            # cannot be negative or zero for mixture
+            std = Activation("softplus")(std)
+            std = Lambda(lambda std: std + 1e-5, name="std-lambda")(std)
+    if mode == "uncalib" and components != 1:
         # mixture coefficient
         a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
         a = Softmax(name="a-softmax")(a)
@@ -542,7 +544,10 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     if mode == 'mse':
         outputs = loc
     elif mode == 'uncalib':
-        outputs = [loc,std,a]
+        if components == 1:
+            outputs = [loc,std]
+        else:
+            outputs = [loc,std,a]
     else:
         outputs = Lambda(lambda x:gaussian_posterior_mean(*x))([inputs,loc,std,noise_std])
 
