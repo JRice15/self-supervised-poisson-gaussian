@@ -518,8 +518,7 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
         # standard deviation
         std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
         # cannot be negative or zero
-        std = K.softplus(std - 4)
-        std = Lambda(lambda std: std + 1e-5, name="std-lambda")(std)
+        std = Lambda(lambda std: K.softplus(std) + 1e-5, name="std-lambda")(std)
     if mode == "uncalib":
         # mixture coefficient
         a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
