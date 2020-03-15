@@ -165,7 +165,7 @@ def _conv(x, num_filters, name):
 
   return x
 
-def _vshifted_conv(x, num_filters, name):
+def _vshifted_conv(x, num_filters, name, activate=True):
     """ Vertically shifted convolution """
     filter_size = [3,3]
     k = filter_size[0]//2
@@ -173,6 +173,8 @@ def _vshifted_conv(x, num_filters, name):
     x = ZeroPadding2D([[k,0],[0,0]])(x)
     x = Conv2D(filters=num_filters, kernel_size=filter_size, padding='same', kernel_initializer='he_normal', name=name)(x)
     x = Cropping2D([[0,k],[0,0]])(x)
+    if activate:
+        x = LeakyReLU(0.1)(x)
 
     return x
 
@@ -226,7 +228,7 @@ def identity_block(input_tensor, filters, stage, block):
     #                   padding='same',
     #                   kernel_initializer='he_normal',
     #                   name=conv_name_base + '2b')(x)
-    x = _vshifted_conv(x, filters2, conv_name_base + '2b')
+    x = _vshifted_conv(x, filters2, conv_name_base + '2b', activate=False)
     x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2b')(x)
     # x = Activation('relu')(x)
     x = LeakyReLU(0.1)(x)
@@ -275,7 +277,7 @@ def conv_block(input_tensor,
     # x = Conv2D(filters2, kernel_size, padding='same',
     #                   kernel_initializer='he_normal',
     #                   name=conv_name_base + '2b')(x)
-    x = _vshifted_conv(x, filters2, conv_name_base + '2b')
+    x = _vshifted_conv(x, filters2, conv_name_base + '2b', activate=False)
     x = BatchNormalization(axis=bn_axis, name=bn_name_base + '2b')(x)
     # x = Activation('relu')(x)
     x = LeakyReLU(0.1)(x)
