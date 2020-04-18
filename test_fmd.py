@@ -10,6 +10,8 @@ from imageio import imread, imwrite
 import glob
 from tqdm import trange
 
+from gaussian_mixture_expected import gaussian_mixture_expected_value
+
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -79,6 +81,7 @@ with open(results_path,'w') as f:
     for index,im in enumerate(X):
         pred = model.predict(im.reshape(1,512,512,1))
         
+        print(pred)
         if args.mode == 'uncalib':
             # select only pixels above bottom 2% and below top 3% of noisy image
             good = np.logical_and(im >= np.quantile(im,0.02), im <= np.quantile(im,0.97))[None,:,:,:]
@@ -89,9 +92,13 @@ with open(results_path,'w') as f:
             res = minimize(optfun, (0.01,0), (np.squeeze(pseudo_clean),np.squeeze(noisy)), method='Nelder-Mead')
             print('bootstrap poisson-gaussian fit: a = %f, b=%f, loss=%f'%(res.x[0],res.x[1],res.fun))
             a,b = res.x
-            
-            # run denoising
-            denoised = denoise_uncalib(im[None,:,:,:],pred[0],pred[1],a,b)
+
+            if args.components == 1:
+                # run denoising
+                denoised = denoise_uncalib(im[None,:,:,:],pred[0],pred[1],a,b)
+            else:
+                # Gaussian mixture model
+                denoised = gaussian_mixture_expected_value(a*pred[0]+b, pred[0], pred)
         else:
             denoised = pred[0]
          
