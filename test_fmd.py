@@ -17,15 +17,22 @@ parser.add_argument('--path',required=True,help='path to dataset root')
 parser.add_argument('--dataset',required=True,help='dataset name e.g. Confocal_MICE')
 parser.add_argument('--mode',default='uncalib',help='noise model: mse, uncalib, gaussian, poisson, poissongaussian')
 parser.add_argument('--reg',type=float,default=0.1,help='regularization weight on prior std. dev.')
+parser.add_argument('--components',type=int,default=1,help='number of mixture components')
 
 args = parser.parse_args()
+
+if args.components != 1 and args.mode != "uncalib":
+    raise ValueError("Components != 1 must be used with mode uncalib")    
 
 """ Re-create the model and load the weights """
 
 model = gaussian_blindspot_network((512, 512, 1),'uncalib')
 
 if args.mode == 'uncalib' or args.mode == 'mse':
-    weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
+    if args.components == 1:
+        weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
+    else:
+        weights_path = 'weights/weights.%s.%s.%dcomponents.latest.hdf5'%(args.dataset,args.mode,args.components)
 else:
     weights_path = 'weights/weights.%s.%s.%0.3f.latest.hdf5'%(args.dataset,args.mode,args.reg)
 
