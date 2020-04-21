@@ -9,8 +9,10 @@ def gmm_posterior_expected_value(components, z, noisesig):
         components: np array, of the form:
             [ 3d mus array, 3d sigmas array, 3d weights array ]
     """
+    sqr = np.square
+
     # constant factor
-    const = np.exp( -(z**2) / (2 * noisesig**2) )
+    const = np.exp( -sqr(z) / (2 * sqr(noisesig) ) )
 
     # numerator and denominator summations, for each distribution in components
     numerator = 0
@@ -19,23 +21,20 @@ def gmm_posterior_expected_value(components, z, noisesig):
         mu  = components[0,...,i]
         sig = components[1,...,i]
         wt  = components[2,...,i]
-        print(i, mu)
-        print(sig)
-        print(wt)
 
-        num_term = wt * ( (noisesig**2) * mu + (sig**2) * z )
-        num_term *= np.exp( -(mu**2) / (2 * sig**2) )
+        num_term = wt * ( sqr(noisesig) * mu + sqr(sig) * z )
+        num_term *= np.exp( -sqr(mu) / (2 * sqr(sig)) )
         num_term *= np.exp(
-            ( ( (noisesig**2) * mu + (sig**2) * z )**2 ) / 
-            ( 2 * (noisesig**2) * (sig**2) * (noisesig**2 + sig**2) ) 
+            ( sqr( sqr(noisesig) * mu + sqr(sig) * z ) ) / 
+            ( 2 * sqr(noisesig) * sqr(sig) * (sqr(noisesig) + sqr(sig)) ) 
         )
-        num_term /= (noisesig**2 + sig**2)**(3/2)
+        num_term /= np.power( (sqr(noisesig) + sqr(sig)), 3/2 )
         numerator += num_term
 
-        den_term = wt / (np.sqrt( noisesig**2 + sig**2 ))
+        den_term = wt / (np.sqrt( sqr(noisesig) + sqr(sig) ))
         den_term *= np.exp(
-            -((mu - z)**2) / 
-            (2 * (noisesig**2 + sig**2))
+            -(sqr(mu - z)) / 
+            (2 * (sqr(noisesig) + sqr(sig)))
         )
         denominator += den_term
     
@@ -44,8 +43,7 @@ def gmm_posterior_expected_value(components, z, noisesig):
 
 
 def test_gm_expected():
-    result = gaussian_mixture_expected_value(
-        50, -710, 
+    result = gmm_posterior_expected_value(
         np.array([ # 3 component mix
             [ # means
                 [[-30, 70, 20],[400, 20, 20]],
@@ -57,7 +55,7 @@ def test_gm_expected():
                 [[0.6, 0.4, 0],[0.2, 0.8, 0]],
                  [[0.5, 0.5, 0],[0.65, 0.35, 0]]
             ]
-        ])
+        ]), -710, 50
     )
     print(result)
     expected = -574
