@@ -10,7 +10,7 @@ from imageio import imread, imwrite
 import glob
 from tqdm import trange
 
-from gaussian_mixture_expected import gaussian_mixture_expected_value
+from gmm_posterior_expected_value import gmm_posterior_expected_value
 
 import argparse
 
@@ -28,7 +28,7 @@ if args.components != 1 and args.mode != "uncalib":
 
 """ Re-create the model and load the weights """
 
-model = gaussian_blindspot_network((512, 512, 1),'uncalib')
+model = gaussian_blindspot_network((512, 512, 1),'uncalib',components=args.components)
 
 if args.mode == 'uncalib' or args.mode == 'mse':
     if args.components == 1:
@@ -70,22 +70,36 @@ def denoise_uncalib(y,loc,std,a,b):
     prior_std = prior_var**0.5
     return np.squeeze(gaussian_posterior_mean(y,loc,prior_std,noise_std))
 
+def gmm_sum_weighted_means(locs, weights):
+    """
+    get expected value of gmm prior, as the sum of weighted means
+    """
+    weighted = locs * weights
+    return np.sum(weighted, axis=-1)
+
+
 if args.mode == 'mse' or args.mode == 'uncalib':
     experiment_name = '%s.%s'%(args.dataset,args.mode)
+    if args.components > 1:
+        experiment_name = '%s.%s.%dcomponents'%(args.dataset,args.mode,args.components)
 else:
     experiment_name = '%s.%s.%0.3f'%(args.dataset,args.mode,args.reg)
+    
 os.makedirs("results/%s"%experiment_name,exist_ok=True)
 results_path = 'results/%s.tab'%experiment_name
+
 with open(results_path,'w') as f:
     f.write('inputPSNR\tdenoisedPSNR\n')
     for index,im in enumerate(X):
         pred = model.predict(im.reshape(1,512,512,1))
         
-        print(pred)
         if args.mode == 'uncalib':
             # select only pixels above bottom 2% and below top 3% of noisy image
             good = np.logical_and(im >= np.quantile(im,0.02), im <= np.quantile(im,0.97))[None,:,:,:]
-            pseudo_clean = pred[0][good]
+            if args.components == 1:
+                pseudo_clean = pred[0][good]
+            else:
+                pseudo_clean = gmm_sum_weighted_means(pred[0], pred[2])[good]
             noisy = im[np.squeeze(good, axis=0)]
 
             # estimate noise level
@@ -93,12 +107,12 @@ with open(results_path,'w') as f:
             print('bootstrap poisson-gaussian fit: a = %f, b=%f, loss=%f'%(res.x[0],res.x[1],res.fun))
             a,b = res.x
 
+            # run denoising
             if args.components == 1:
-                # run denoising
                 denoised = denoise_uncalib(im[None,:,:,:],pred[0],pred[1],a,b)
             else:
                 # Gaussian mixture model
-                denoised = gaussian_mixture_expected_value(a*pred[0]+b, pred[0], pred)
+                denoised = gmm_posterior_expected_value(components=pred, z=im[None,:,:,:], noisesig=np.sqrt(a*pseudo_clean+b))
         else:
             denoised = pred[0]
          
