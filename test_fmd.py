@@ -51,7 +51,13 @@ def load_images(noise):
         images.append(imread(path))
     return np.stack(images,axis=0)[:,:,:,None]/255.
 
-X = load_images('raw')
+def load_images_generator(noise):
+    basepath = args.path + '/' + args.dataset + '/' + noise
+    images = []
+    for path in sorted(glob.glob(basepath + '/19/*.png')):
+        yield imread(path)[:,:,None]/255.
+
+X = load_images_generator('raw')
 Y = load_images('gt')
 gt = np.squeeze(Y)*255
 
