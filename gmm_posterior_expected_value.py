@@ -12,7 +12,7 @@ def gmm_posterior_expected_value(components, z, noisesig):
             [ (1, 512, 512, 3) mus matrix, '' sigmas matrix, '' weights matrix ]
     """
     sqr = K.square
-    z = K.cast(z, "float32")
+    z = K.squeeze(K.cast(z, "float32"), axis=-1)
 
     # constant factor
     const = K.exp( -sqr(z) / (2 * sqr(noisesig)) )
@@ -25,7 +25,6 @@ def gmm_posterior_expected_value(components, z, noisesig):
         mu  = components[0][:,:,:,i]
         sig = components[1][:,:,:,i]
         wt  = components[2][:,:,:,i]
-        print(mu.shape, sig.shape, wt.shape, z.shape, noisesig.shape)
 
         num_term = wt * ( sqr(noisesig) * mu + sqr(sig) * z )
         num_term *= K.exp( -sqr(mu) / (2 * sqr(sig)) )

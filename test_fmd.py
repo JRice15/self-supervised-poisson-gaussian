@@ -121,11 +121,13 @@ with open(results_path,'w') as f:
                 # Gaussian mixture model
                 noise_sigma = np.sqrt( np.maximum(1e-3, a*gmm_prior_expected+b) )
                 denoised = gmm_posterior_expected_value(components=pred, z=im[None,:,:,:], noisesig=noise_sigma)
+                denoised = K.eval(denoised)
         else:
             denoised = pred[0]
                  
         # scale and clip to 8-bit
-        denoised = np.clip(np.squeeze(denoised*255),0,255)
+        denoised = np.squeeze(denoised*255)
+        denoised = np.clip(denoised, 0, 255)
         
         # write out image
         imwrite('results/%s/%02d.png'%(experiment_name,index),denoised.astype('uint8'))
