@@ -9,20 +9,23 @@ def gmm_posterior_expected_value(components, z, noisesig):
         noisesig: float
         z: float
         components: np array, of the form:
-            [ 3d mus matrix, 3d sigmas matrix, 3d weights matrix ]
+            [ (1, 512, 512, 3) mus matrix, '' sigmas matrix, '' weights matrix ]
     """
     sqr = K.square
+    z = K.cast(z, "float32")
 
     # constant factor
-    const = K.exp( -sqr(z) / (2 * sqr(noisesig) ) )
+    const = K.exp( -sqr(z) / (2 * sqr(noisesig)) )
 
     # numerator and denominator summations, for each distribution in components
     numerator = 0
     denominator = 0
-    for i in range(len(components[0][0][0])):
-        mu  = components[0,...,i]
-        sig = components[1,...,i]
-        wt  = components[2,...,i]
+    for i in range(components[0].shape[-1]):
+        # select each component layer
+        mu  = components[0][:,:,:,i]
+        sig = components[1][:,:,:,i]
+        wt  = components[2][:,:,:,i]
+        print(mu.shape, sig.shape, wt.shape, z.shape, noisesig.shape)
 
         num_term = wt * ( sqr(noisesig) * mu + sqr(sig) * z )
         num_term *= K.exp( -sqr(mu) / (2 * sqr(sig)) )
