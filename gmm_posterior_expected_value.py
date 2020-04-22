@@ -1,4 +1,6 @@
 import numpy as np
+import keras.backend as K
+import tensorflow as tf
 
 
 def gmm_posterior_expected_value(components, z, noisesig):
@@ -7,12 +9,12 @@ def gmm_posterior_expected_value(components, z, noisesig):
         noisesig: float
         z: float
         components: np array, of the form:
-            [ 3d mus array, 3d sigmas array, 3d weights array ]
+            [ 3d mus matrix, 3d sigmas matrix, 3d weights matrix ]
     """
-    sqr = np.square
+    sqr = K.square
 
     # constant factor
-    const = np.exp( -sqr(z) / (2 * sqr(noisesig) ) )
+    const = K.exp( -sqr(z) / (2 * sqr(noisesig) ) )
 
     # numerator and denominator summations, for each distribution in components
     numerator = 0
@@ -23,16 +25,16 @@ def gmm_posterior_expected_value(components, z, noisesig):
         wt  = components[2,...,i]
 
         num_term = wt * ( sqr(noisesig) * mu + sqr(sig) * z )
-        num_term *= np.exp( -sqr(mu) / (2 * sqr(sig)) )
-        num_term *= np.exp(
+        num_term *= K.exp( -sqr(mu) / (2 * sqr(sig)) )
+        num_term *= K.exp(
             ( sqr( sqr(noisesig) * mu + sqr(sig) * z ) ) / 
             ( 2 * sqr(noisesig) * sqr(sig) * (sqr(noisesig) + sqr(sig)) ) 
         )
-        num_term /= np.power( (sqr(noisesig) + sqr(sig)), 3/2 )
+        num_term /= K.pow( (sqr(noisesig) + sqr(sig)), 3/2 )
         numerator += num_term
 
-        den_term = wt / (np.sqrt( sqr(noisesig) + sqr(sig) ))
-        den_term *= np.exp(
+        den_term = wt / (K.sqrt( sqr(noisesig) + sqr(sig) ))
+        den_term *= K.exp(
             -(sqr(mu - z)) / 
             (2 * (sqr(noisesig) + sqr(sig)))
         )
