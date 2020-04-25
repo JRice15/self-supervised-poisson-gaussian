@@ -43,8 +43,8 @@ def gmm_posterior_expected_value(components, z, noisesig):
         denominator += den_term
     
     result = const * numerator / denominator
-    # replace nans with large positive number, which get clipped later
-    result = tf.where(tf.math.is_nan(result), tf.fill(result.shape, 1e12), result)
+    # replace nans with zero
+    result = tf.where(tf.math.is_nan(result), tf.fill(result.shape, 0.0), result)
     return result
 
 
