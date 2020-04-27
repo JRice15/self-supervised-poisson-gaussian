@@ -105,8 +105,8 @@ with open(results_path,'w') as f:
             if args.components == 1:
                 pseudo_clean = pred[0][good]
             else:
-                full_pseudo_clean = gmm_sum_weighted_means(pred[0], pred[2])
-                pseudo_clean = full_pseudo_clean[np.squeeze(good, axis=-1)]
+                weighted_means = gmm_sum_weighted_means(pred[0], pred[2])
+                pseudo_clean = weighted_means[np.squeeze(good, axis=-1)]
             noisy = im[np.squeeze(good, axis=0)]
 
             # estimate noise level
@@ -119,9 +119,8 @@ with open(results_path,'w') as f:
                 denoised = denoise_uncalib(im[None,:,:,:],pred[0],pred[1],a,b)
             else:
                 # Gaussian mixture model
-                noise_sigma = np.sqrt( np.maximum(1e-3, a*full_pseudo_clean+b) )
-                denoised = gmm_posterior_expected_value(components=pred, z=im[None,:,:,:], noisesig=noise_sigma)
-                denoised = K.eval(denoised)
+                pred_std = K.mean(pred[1], axis=-1)
+                denoised = denoise_uncalib(im[None,:,:,:],weighted_means,pred_std,a,b)
         else:
             denoised = pred[0]
                  
