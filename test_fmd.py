@@ -98,11 +98,15 @@ with open(results_path,'w') as f:
     f.write('inputPSNR\tdenoisedPSNR\n')
     for index,im in enumerate(X):
         pred = model.predict(im.reshape(1,512,512,1))
+
+        mixture_coeffs = np.ones(pred[0].shape)
+        pred.append(mixture_coeffs)
         
         if args.mode == 'uncalib':
             # select only pixels above bottom 2% and below top 3% of noisy image
             good = np.logical_and(im >= np.quantile(im,0.02), im <= np.quantile(im,0.97))[None,:,:,:]
             if args.components == 1:
+                full_pseudo_clean = pred[0]
                 pseudo_clean = pred[0][good]
             else:
                 full_pseudo_clean = gmm_sum_weighted_means(pred[0], pred[2])
@@ -115,13 +119,13 @@ with open(results_path,'w') as f:
             a,b = res.x
 
             # run denoising
-            if args.components == 1:
-                denoised = denoise_uncalib(im[None,:,:,:],pred[0],pred[1],a,b)
-            else:
-                # Gaussian mixture model
-                noise_sigma = np.sqrt( np.maximum(1e-3, a*full_pseudo_clean+b) )
-                denoised = gmm_posterior_expected_value(components=pred, z=im[None,:,:,:], noisesig=noise_sigma)
-                denoised = K.eval(denoised)
+            # if args.components == 1:
+            #     denoised = denoise_uncalib(im[None,:,:,:],pred[0],pred[1],a,b)
+            # else:
+            # Gaussian mixture model
+            noise_sigma = np.sqrt( np.maximum(1e-3, a*full_pseudo_clean+b) )
+            denoised = gmm_posterior_expected_value(components=pred, z=im[None,:,:,:], noisesig=noise_sigma)
+            denoised = K.eval(denoised)
         else:
             denoised = pred[0]
                  
