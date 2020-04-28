@@ -89,16 +89,16 @@ def random_crop_generator(data, crop_size, batch_size):
 from keras.optimizers import Adam, SGD
 from keras.callbacks import LambdaCallback, ModelCheckpoint, ReduceLROnPlateau
 
-model = gaussian_blindspot_network((args.crop, args.crop, 1),args.mode,args.reg)
+model = gaussian_offset_network((args.crop, args.crop, 1),args.mode,args.reg)
 
 model.compile(optimizer=Adam(args.lr))
 
-os.makedirs('weights',exist_ok=True)
+os.makedirs('weights2',exist_ok=True)
 
 if args.mode == 'uncalib' or args.mode == 'mse':
-    weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
+    weights_path = 'weights2/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
 else:
-    weights_path = 'weights/weights.%s.%s.%0.3f.latest.hdf5'%(args.dataset,args.mode,args.reg)
+    weights_path = 'weights2/weights.%s.%s.%0.3f.latest.hdf5'%(args.dataset,args.mode,args.reg)
 
 callbacks = []
 callbacks.append(ModelCheckpoint(filepath=weights_path, monitor='val_loss',save_best_only=1,verbose=1))

@@ -25,9 +25,9 @@ args = parser.parse_args()
 model = gaussian_blindspot_network((512, 512, 1),'uncalib')
 
 if args.mode == 'uncalib' or args.mode == 'mse':
-    weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
+    weights_path = 'weights2/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
 else:
-    weights_path = 'weights/weights.%s.%s.%0.3f.latest.hdf5'%(args.dataset,args.mode,args.reg)
+    weights_path = 'weights2/weights.%s.%s.%0.3f.latest.hdf5'%(args.dataset,args.mode,args.reg)
 
 model.load_weights(weights_path)
 

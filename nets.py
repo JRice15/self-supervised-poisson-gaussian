@@ -1,12 +1,14 @@
-import numpy as np
-from keras import Input
-from keras.models import Model
-from keras.layers import Input, Lambda, Conv2D, LeakyReLU, UpSampling2D, MaxPooling2D, ZeroPadding2D, Cropping2D, Concatenate, Reshape, GlobalAveragePooling2D, BatchNormalization, Add, Subtract
-from keras.initializers import Constant
 import keras.backend as K
+import numpy as np
 import tensorflow as tf
+from keras import Input
+from keras.initializers import Constant
+from keras.layers import (Add, BatchNormalization, Concatenate, Conv2D,
+                          Cropping2D, GlobalAveragePooling2D, Input, Lambda,
+                          Layer, LeakyReLU, MaxPooling2D, Reshape, Subtract,
+                          UpSampling2D, ZeroPadding2D, InputSpec)
+from keras.models import Model
 
-from keras.layers import Layer
 
 class GaussianLayer(Layer):
     """ Computes noise std. dev. for Gaussian noise model. """
@@ -78,6 +80,27 @@ class PoissonGaussianLayer(Layer):
     def compute_output_shape(self, input_shape):
         return input_shape
 
+
+
+
+class Offset2D(Conv2D):
+
+    def __init__(self, **kwargs):
+        kwargs["padding"] = "same"
+        super().__init__(filters=1, kernel_size=(2,2), **kwargs)
+
+    def build(self, input_shape):
+        kernel_shape = (2, 2) + (1, 1)
+        self.kernel = K.constant(0.25, tf.float32, kernel_shape)
+        self.bias = None
+        self.input_spec = InputSpec(ndim=self.rank + 2,
+                                axes={4: 1})
+        self.built = True
+
+
+
+
+
 def mse_loss(y,loc):
     """ Mean squared error loss function
         Use mean-squared error to regress to the expected value
@@ -129,139 +152,118 @@ def gaussian_posterior_mean(y,loc,std,noise_std):
     total_var = var+noise_var
     return (loc*noise_var + var*y)/total_var
   
-def _conv(x, num_filters, name):
-  """ 2d convolution """
-  filter_size = [3,3]
 
-  x = Conv2D(filters=num_filters, kernel_size=filter_size, padding='same', kernel_initializer='he_normal', name=name)(x)
-  x = LeakyReLU(0.1)(x)
+def conv(x, num_channels, name):
+    """ 2d convolution """
 
-  return x
+    filter_size = [3,3]
+    x = Conv2D(filters=num_channels, kernel_size=filter_size, padding='same', kernel_initializer='he_normal', name=name)(x)
+    x = LeakyReLU(0.1)(x)
 
-def _vshifted_conv(x, num_filters, name):
-  """ Vertically shifted convolution """
-  filter_size = [3,3]
-  k = filter_size[0]//2
+    return x
 
-  x = ZeroPadding2D([[k,0],[0,0]])(x)
-  x = Conv2D(filters=num_filters, kernel_size=filter_size, padding='same', kernel_initializer='he_normal', name=name)(x)
-  x = LeakyReLU(0.1)(x)
-  x = Cropping2D([[0,k],[0,0]])(x)
+def pool(x):
+    x = MaxPooling2D(pool_size=2,strides=2,padding='same')(x)
+    return x
 
-  return x
+def u_net(x):
+    """ Blind-spot network; adapted from noise2noise GitHub
+        Each row of output only sees input pixels above that row
+    """
 
-def _pool(x):
-  """ max pooling"""
-  x = MaxPooling2D(pool_size=2,strides=2,padding='same')(x)
+    x = Offset2D()(x)
 
-  return x
+    skips = [x]
 
-def _vshifted_pool(x):
-  """ Vertically shifted max pooling"""
-  x = ZeroPadding2D([[1,0],[0,0]])(x)
-  x = Cropping2D([[0,1],[0,0]])(x)
+    n = x
+    n = conv(n, 48, 'enc_conv0')
+    n = conv(n, 48, 'enc_conv1')
+    n = pool(n)
+    skips.append(n)
 
-  x = MaxPooling2D(pool_size=2,strides=2,padding='same')(x)
+    n = conv(n, 48, 'enc_conv2')
+    n = pool(n)
+    skips.append(n)
 
-  return x
+    n = conv(n, 48, 'enc_conv3')
+    n = pool(n)
+    skips.append(n)
 
-def _vertical_blindspot_network(x):
-  """ Blind-spot network; adapted from noise2noise GitHub
-    Each row of output only sees input pixels above that row
-  """
-  skips = [x]
+    n = conv(n, 48, 'enc_conv4')
+    n = pool(n)
+    skips.append(n)
 
-  n = x
-  n = _vshifted_conv(n, 48, 'enc_conv0')
-  n = _vshifted_conv(n, 48, 'enc_conv1')
-  n = _vshifted_pool(n)
-  skips.append(n)
+    n = conv(n, 48, 'enc_conv5')
+    n = pool(n)
+    n = conv(n, 48, 'enc_conv6')
 
-  n = _vshifted_conv(n, 48, 'enc_conv2')
-  n = _vshifted_pool(n)
-  skips.append(n)
+    #-----------------------------------------------
+    n = UpSampling2D(2)(n)
+    n = Concatenate(axis=3)([n, skips.pop()])
+    n = conv(n, 96, 'dec_conv5')
+    n = conv(n, 96, 'dec_conv5b')
 
-  n = _vshifted_conv(n, 48, 'enc_conv3')
-  n = _vshifted_pool(n)
-  skips.append(n)
+    n = UpSampling2D(2)(n)
+    n = Concatenate(axis=3)([n, skips.pop()])
+    n = conv(n, 96, 'dec_conv4')
+    n = conv(n, 96, 'dec_conv4b')
 
-  n = _vshifted_conv(n, 48, 'enc_conv4')
-  n = _vshifted_pool(n)
-  skips.append(n)
+    n = UpSampling2D(2)(n)
+    n = Concatenate(axis=3)([n, skips.pop()])
+    n = conv(n, 96, 'dec_conv3')
+    n = conv(n, 96, 'dec_conv3b')
 
-  n = _vshifted_conv(n, 48, 'enc_conv5')
-  n = _vshifted_pool(n)
-  n = _vshifted_conv(n, 48, 'enc_conv6')
+    n = UpSampling2D(2)(n)
+    n = Concatenate(axis=3)([n, skips.pop()])
+    n = conv(n, 96, 'dec_conv2')
+    n = conv(n, 96, 'dec_conv2b')
 
-  #-----------------------------------------------
-  n = UpSampling2D(2)(n)
-  n = Concatenate(axis=3)([n, skips.pop()])
-  n = _vshifted_conv(n, 96, 'dec_conv5')
-  n = _vshifted_conv(n, 96, 'dec_conv5b')
+    n = UpSampling2D(2)(n)
+    n = Concatenate(axis=3)([n, skips.pop()])
+    n = conv(n, 96, 'dec_conv1a')
+    n = conv(n, 96, 'dec_conv1b')
 
-  n = UpSampling2D(2)(n)
-  n = Concatenate(axis=3)([n, skips.pop()])
-  n = _vshifted_conv(n, 96, 'dec_conv4')
-  n = _vshifted_conv(n, 96, 'dec_conv4b')
+    n = Offset2D()(n)
 
-  n = UpSampling2D(2)(n)
-  n = Concatenate(axis=3)([n, skips.pop()])
-  n = _vshifted_conv(n, 96, 'dec_conv3')
-  n = _vshifted_conv(n, 96, 'dec_conv3b')
+    return n
 
-  n = UpSampling2D(2)(n)
-  n = Concatenate(axis=3)([n, skips.pop()])
-  n = _vshifted_conv(n, 96, 'dec_conv2')
-  n = _vshifted_conv(n, 96, 'dec_conv2b')
+def offset_network(inputs):
+    b,h,w,c = K.int_shape(inputs)
+    #if h != w:
+        #raise ValueError('input shape must be square')
+    if h % 32 != 0 or w % 32 != 0:
+        raise ValueError('input shape (%d x %d) must be divisible by 32'%(h,w))
 
-  n = UpSampling2D(2)(n)
-  n = Concatenate(axis=3)([n, skips.pop()])
-  n = _vshifted_conv(n, 96, 'dec_conv1a')
-  n = _vshifted_conv(n, 96, 'dec_conv1b')
+    # make vertical blindspot network
+    vert_input = Input([h,w,c])
+    vert_output = u_net(vert_input)
+    vert_model = Model(inputs=vert_input,outputs=vert_output)
 
-  # final pad and crop for blind spot
-  n = ZeroPadding2D([[1,0],[0,0]])(n)
-  n = Cropping2D([[0,1],[0,0]])(n)
+    # run vertical blindspot network on rotated inputs
+    stacks = []
+    for i in range(4):
+        rotated = Lambda(lambda x: tf.image.rot90(x,i))(inputs)
+        if i == 0 or i == 2:
+            rotated = Reshape([h,w,c])(rotated)
+        else:
+            rotated = Reshape([w,h,c])(rotated)
+        out = vert_model(rotated)
+        out = Lambda(lambda x:tf.image.rot90(x,4-i))(out)
+        stacks.append(out)
 
-  return n
+    # concatenate outputs
+    x = Concatenate(axis=3)(stacks)
 
-def blindspot_network(inputs):
-  b,h,w,c = K.int_shape(inputs)
-  #if h != w:
-    #raise ValueError('input shape must be square')
-  if h % 32 != 0 or w % 32 != 0:
-    raise ValueError('input shape (%d x %d) must be divisible by 32'%(h,w))
+    # final 1x1 convolutional layers
+    x = Conv2D(384, 1, kernel_initializer='he_normal', name='conv1x1_1')(x)
+    x = LeakyReLU(0.1)(x)
 
-  # make vertical blindspot network
-  vert_input = Input([h,w,c])
-  vert_output = _vertical_blindspot_network(vert_input)
-  vert_model = Model(inputs=vert_input,outputs=vert_output)
+    x = Conv2D(96, 1, kernel_initializer='he_normal', name='conv1x1_2')(x)
+    x = LeakyReLU(0.1)(x)
+    
+    return x
 
-  # run vertical blindspot network on rotated inputs
-  stacks = []
-  for i in range(4):
-      rotated = Lambda(lambda x: tf.image.rot90(x,i))(inputs)
-      if i == 0 or i == 2:
-          rotated = Reshape([h,w,c])(rotated)
-      else:
-          rotated = Reshape([w,h,c])(rotated)
-      out = vert_model(rotated)
-      out = Lambda(lambda x:tf.image.rot90(x,4-i))(out)
-      stacks.append(out)
-
-  # concatenate outputs
-  x = Concatenate(axis=3)(stacks)
-
-  # final 1x1 convolutional layers
-  x = Conv2D(384, 1, kernel_initializer='he_normal', name='conv1x1_1')(x)
-  x = LeakyReLU(0.1)(x)
-
-  x = Conv2D(96, 1, kernel_initializer='he_normal', name='conv1x1_2')(x)
-  x = LeakyReLU(0.1)(x)
-  
-  return x
-
-def gaussian_blindspot_network(input_shape,mode,reg_weight=0):
+def gaussian_offset_network(input_shape,mode,reg_weight=0):
     """ Create a variant of the Gaussian blindspot newtork.
         input_shape: Shape of input image
         mode: mse, uncalib, global, perpixel, poisson
@@ -275,8 +277,8 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0):
     # create input layer
     inputs = Input(input_shape)
   
-    # run blindspot network
-    x = blindspot_network(inputs)
+    # run offset network
+    x = offset_network(inputs)
     
     # get prior parameters
     loc = Conv2D(1, 1, kernel_initializer='he_normal', name='loc')(x)
@@ -319,4 +321,3 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0):
     model.add_loss(loss)
   
     return model
-
