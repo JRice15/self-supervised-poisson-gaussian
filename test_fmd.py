@@ -119,8 +119,10 @@ with open(results_path,'w') as f:
                 denoised = denoise_uncalib(im[None,:,:,:],pred[0],pred[1],a,b)
             else:
                 # Gaussian mixture model
-                pred_std = K.mean(pred[1], axis=-1)
-                denoised = denoise_uncalib(im[None,:,:,:],weighted_means,pred_std,a,b)
+                pred_loc = np.mean(pred[0], axis=-1)
+                pred_std = np.sum(np.abs(np.diff(pred[0], axis=-1)), axis=-1)**2 + np.sum(pred[1] * pred[2], axis=-1)**2
+                denoised = denoise_uncalib(np.squeeze(im[None,:,:,:], axis=-1),pred_loc,pred_std,a,b)
+                denoised = weighted_means
         else:
             denoised = pred[0]
                  
