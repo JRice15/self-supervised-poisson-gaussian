@@ -31,10 +31,10 @@ if args.components != 1 and args.mode != "uncalib":
 model = gaussian_blindspot_network((512, 512, 1),'uncalib',components=args.components)
 
 if args.mode == 'uncalib' or args.mode == 'mse':
-    if args.components == 1:
-        weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
-    else:
-        weights_path = 'weights/weights.%s.%s.%dcomponents.latest.hdf5'%(args.dataset,args.mode,args.components)
+    # if args.components == 1:
+    #     weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
+    # else:
+    weights_path = 'weights/weights.%s.%s.%dcomponents.latest.hdf5'%(args.dataset,args.mode,args.components)
 else:
     weights_path = 'weights/weights.%s.%s.%0.3f.latest.hdf5'%(args.dataset,args.mode,args.reg)
 
@@ -85,9 +85,9 @@ def gmm_sum_weighted_means(locs, weights):
 
 
 if args.mode == 'mse' or args.mode == 'uncalib':
-    experiment_name = '%s.%s'%(args.dataset,args.mode)
-    if args.components > 1:
-        experiment_name = '%s.%s.%dcomponents'%(args.dataset,args.mode,args.components)
+    # experiment_name = '%s.%s'%(args.dataset,args.mode)
+    # if args.components > 1:
+    experiment_name = '%s.%s.%dcomponents'%(args.dataset,args.mode,args.components)
 else:
     experiment_name = '%s.%s.%0.3f'%(args.dataset,args.mode,args.reg)
     
@@ -102,11 +102,11 @@ with open(results_path,'w') as f:
         if args.mode == 'uncalib':
             # select only pixels above bottom 2% and below top 3% of noisy image
             good = np.logical_and(im >= np.quantile(im,0.02), im <= np.quantile(im,0.97))[None,:,:,:]
-            if args.components == 1:
-                pseudo_clean = pred[0][good]
-            else:
-                full_pseudo_clean = gmm_sum_weighted_means(pred[0], pred[2])
-                pseudo_clean = full_pseudo_clean[np.squeeze(good, axis=-1)]
+            # if args.components == 1:
+            #     pseudo_clean = pred[0][good]
+            # else:
+            full_pseudo_clean = gmm_sum_weighted_means(pred[0], pred[2])
+            pseudo_clean = full_pseudo_clean[np.squeeze(good, axis=-1)]
             noisy = im[np.squeeze(good, axis=0)]
 
             # estimate noise level
@@ -115,13 +115,13 @@ with open(results_path,'w') as f:
             a,b = res.x
 
             # run denoising
-            if args.components == 1:
-                denoised = denoise_uncalib(im[None,:,:,:],pred[0],pred[1],a,b)
-            else:
-                # Gaussian mixture model
-                noise_sigma = np.sqrt( np.maximum(1e-3, a*full_pseudo_clean+b) )
-                denoised = gmm_posterior_expected_value(components=pred, z=im[None,:,:,:], noisesig=noise_sigma)
-                denoised = K.eval(denoised)
+            # if args.components == 1:
+            #     denoised = denoise_uncalib(im[None,:,:,:],pred[0],pred[1],a,b)
+            # else:
+            # Gaussian mixture model
+            noise_sigma = np.sqrt( np.maximum(1e-3, a*full_pseudo_clean+b) )
+            denoised = gmm_posterior_expected_value(components=pred, z=im[None,:,:,:], noisesig=noise_sigma)
+            denoised = K.eval(denoised)
         else:
             denoised = pred[0]
                  

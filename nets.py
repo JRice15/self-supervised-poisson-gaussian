@@ -519,13 +519,13 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     if mode != 'mse':
         # standard deviation
         std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
-        if components != 1:
-            # std cannot be negative or zero for mixture
-            std = Activation("softplus", name="std-softplus")(std)
-            std = Lambda(lambda std: std + 1e-5, name="std-add-small")(std)
-            # mixture coefficient
-            a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
-            a = Softmax(name="a-softmax")(a)
+        # if components != 1:
+        # std cannot be negative or zero for mixture
+        std = Activation("softplus", name="std-softplus")(std)
+        std = Lambda(lambda std: std + 1e-5, name="std-add-small")(std)
+        # mixture coefficient
+        a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
+        a = Softmax(name="a-softmax")(a)
 
     # get noise variance
     if mode == 'mse':
@@ -545,10 +545,10 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     if mode == 'mse':
         outputs = loc
     elif mode == 'uncalib':
-        if components == 1:
-            outputs = [loc,std]
-        else:
-            outputs = [loc,std,a]
+        # if components == 1:
+        #     outputs = [loc,std]
+        # else:
+        outputs = [loc,std,a]
     else:
         outputs = Lambda(lambda x:gaussian_posterior_mean(*x))([inputs,loc,std,noise_std])
 
@@ -560,10 +560,10 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     if mode == 'mse':
         loss = mse_loss(inputs,loc)
     elif mode == 'uncalib':
-        if components == 1:
-            loss = uncalib_gaussian_loss(inputs, loc, std)
-        else:
-            loss = uncalib_gaussian_mixture_loss(inputs,loc,std,a)
+        # if components == 1:
+        #     loss = uncalib_gaussian_loss(inputs, loc, std)
+        # else:
+        loss = uncalib_gaussian_mixture_loss(inputs,loc,std,a)
     else:
         loss = gaussian_loss(inputs,loc,std,noise_std,reg_weight)
     model.add_loss(loss)

@@ -100,10 +100,10 @@ model.compile(optimizer=Adam(args.lr))
 os.makedirs('weights',exist_ok=True)
 
 if args.mode == 'uncalib' or args.mode == 'mse':
-    if args.components == 1:
-        weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
-    else:
-        weights_path = 'weights/weights.%s.%s.%dcomponents.latest.hdf5'%(args.dataset,args.mode,args.components)
+    # if args.components == 1:
+    #     weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
+    # else:
+    weights_path = 'weights/weights.%s.%s.%dcomponents.latest.hdf5'%(args.dataset,args.mode,args.components)
 else:
     weights_path = 'weights/weights.%s.%s.%0.3f.latest.hdf5'%(args.dataset,args.mode,args.reg)
 
