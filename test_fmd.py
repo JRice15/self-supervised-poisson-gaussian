@@ -98,7 +98,7 @@ with open(results_path,'w') as f:
     f.write('inputPSNR\tdenoisedPSNR\n')
     for index,im in enumerate(X):
         pred = model.predict(im.reshape(1,512,512,1))
-        
+
         if args.mode == 'uncalib':
             # select only pixels above bottom 2% and below top 3% of noisy image
             good = np.logical_and(im >= np.quantile(im,0.02), im <= np.quantile(im,0.97))[None,:,:,:]
@@ -129,6 +129,9 @@ with open(results_path,'w') as f:
         denoised = np.squeeze(denoised*255)
         denoised = np.clip(denoised, 0, 255)
         
+        full_pseudo_clean = np.clip(np.squeeze(full_pseudo_clean * 255), 0, 255)
+        print('psuedoclean psnr:', peak_signal_noise_ratio(gt, full_pseudo_clean))
+
         # write out image
         imwrite('results/%s/%02d.png'%(experiment_name,index),denoised.astype('uint8'))
 
