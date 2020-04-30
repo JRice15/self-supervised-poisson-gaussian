@@ -48,7 +48,6 @@ def gmm_posterior_expected_value(components, z, noisesig):
     return result
 
 
-
 def test_gm_expected():
     result = gmm_posterior_expected_value(
         np.array([ # 3 component mix

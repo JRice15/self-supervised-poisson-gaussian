@@ -113,7 +113,7 @@ def uncalib_gaussian_mixture_loss(y,loc,std,a):
             a: mixture coefficients
     """
     mixture = tfp.distributions.MixtureSameFamily(
-        mixture_distribution=tfp.distributions.Categorical(a, validate_args=True),
+        mixture_distribution=tfp.distributions.Categorical(probs=a, validate_args=True),
         components_distribution=tfp.distributions.Normal(
             loc=loc,
             scale=std,
@@ -521,8 +521,8 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
         std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
         if components != 1:
             # std cannot be negative or zero for mixture
-            std = Activation("softplus", name="std-softplus")(std)
-            std = Lambda(lambda std: std + 1e-5, name="std-add-small")(std)
+            std = Activation("softplus", name="std-softplus")(std - 4)
+            std = Lambda(lambda std: std + 1e-3, name="std-add-small")(std)
             # mixture coefficient
             a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
             a = Softmax(name="a-softmax")(a)
