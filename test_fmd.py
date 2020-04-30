@@ -22,7 +22,7 @@ args = parser.parse_args()
 
 """ Re-create the model and load the weights """
 
-model = gaussian_blindspot_network((512, 512, 1),'uncalib')
+model = gaussian_offset_network((512, 512, 1),'uncalib')
 
 if args.mode == 'uncalib' or args.mode == 'mse':
     weights_path = 'weights2/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)

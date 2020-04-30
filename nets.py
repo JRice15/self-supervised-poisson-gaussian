@@ -90,15 +90,16 @@ class Offset2D(Conv2D):
         super().__init__(filters=1, kernel_size=(2,2), **kwargs)
 
     def build(self, input_shape):
-        kernel_shape = (2, 2) + (1, 1)
+        kernel_shape = (2, 2) + (input_shape[-1], self.filters)
         self.kernel = K.constant(0.25, tf.float32, kernel_shape)
-        self.bias = None
         self.input_spec = InputSpec(ndim=self.rank + 2,
-                                axes={4: 1})
+                                axes={-1: input_shape[-1]})
+        self.use_bias = False
+        self.bias = None
         self.built = True
 
-
-
+    def compute_output_shape(self, input_shape):
+        return input_shape[:-1] + (self.filters,)
 
 
 def mse_loss(y,loc):
