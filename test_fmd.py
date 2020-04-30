@@ -129,8 +129,9 @@ with open(results_path,'w') as f:
         denoised = np.squeeze(denoised*255)
         denoised = np.clip(denoised, 0, 255)
         
-        full_pseudo_clean = np.clip(np.squeeze(full_pseudo_clean * 255), 0, 255)
-        print('psuedoclean psnr:', peak_signal_noise_ratio(gt, full_pseudo_clean))
+        if args.components != 1:
+            full_pseudo_clean = np.clip(np.squeeze(full_pseudo_clean * 255), 0, 255)
+            print('psuedoclean psnr:', peak_signal_noise_ratio(gt, full_pseudo_clean, data_range=255))
 
         # write out image
         imwrite('results/%s/%02d.png'%(experiment_name,index),denoised.astype('uint8'))

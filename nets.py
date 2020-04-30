@@ -521,8 +521,7 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
         std = Conv2D(components, 1, kernel_initializer='he_normal', name='std')(x)
         if components != 1:
             # std cannot be negative or zero for mixture
-            std = Activation("softplus", name="std-softplus")(std - 4)
-            std = Lambda(lambda std: std + 1e-3, name="std-add-small")(std)
+            std = Lambda(lambda x: K.softplus(x-4) + 1e-3, name="std-softplus")(std)
             # mixture coefficient
             a = Conv2D(components, 1, kernel_initializer="he_normal", name="a")(x)
             a = Softmax(name="a-softmax")(a)
