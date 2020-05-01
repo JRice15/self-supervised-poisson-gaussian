@@ -3,13 +3,15 @@ import keras.backend as K
 import tensorflow as tf
 
 
-def gmm_posterior_expected_value(components, z, noisesig):
+def gmm_posterior_expected_value(components, mus, sigs, weights, z, noisesig):
     """
     Args:
+        components: int, number of components
+        mus: locs
+        sigs: std devs
+        weights: mixture weights / coefficients
         noisesig: float
         z: float
-        components: np array, of the form:
-            [ (1, 512, 512, 3) mus matrix, '' sigmas matrix, '' weights matrix ]
     """
     sqr = K.square
     z = K.squeeze(K.cast(z, "float32"), axis=-1)
@@ -20,11 +22,11 @@ def gmm_posterior_expected_value(components, z, noisesig):
     # numerator and denominator summations, for each distribution in components
     numerator = 0
     denominator = 0
-    for i in range(components[0].shape[-1]):
+    for i in range(components):
         # select each component layer
-        mu  = components[0][:,:,:,i]
-        sig = components[1][:,:,:,i]
-        wt  = components[2][:,:,:,i]
+        mu  = mus[:,:,:,i]
+        sig = sigs[:,:,:,i]
+        wt  = weights[:,:,:,i]
 
         num_term = wt * ( sqr(noisesig) * mu + sqr(sig) * z )
         num_term *= K.exp( -sqr(mu) / (2 * sqr(sig)) )
