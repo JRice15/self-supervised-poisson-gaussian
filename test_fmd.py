@@ -72,6 +72,12 @@ with open(results_path,'w') as f:
     for index,im in enumerate(X):
         pred = model.predict(im.reshape(1,512,512,1))
         
+        std_weights = K.softmax(1 / pred[1])
+        weighted_locs = pred[0] * std_weights
+        weighted_locs = AveragePooling2D()(weighted_locs) * 4
+        weighted_stds = AveragePooling2D()(pred[1])
+        pred = [weighted_locs, weighted_stds]
+
         if args.mode == 'uncalib':
             # select only pixels above bottom 2% and below top 3% of noisy image
             good = np.logical_and(im >= np.quantile(im,0.02), im <= np.quantile(im,0.97))[None,:,:,:]

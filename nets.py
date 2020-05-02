@@ -6,7 +6,7 @@ from keras.initializers import Constant
 from keras.layers import (Add, BatchNormalization, Concatenate, Conv2D,
                           Cropping2D, GlobalAveragePooling2D, Input, Lambda,
                           Layer, LeakyReLU, MaxPooling2D, Reshape, Subtract,
-                          UpSampling2D, ZeroPadding2D, InputSpec)
+                          UpSampling2D, ZeroPadding2D, InputSpec, AveragePooling2D)
 from keras.models import Model
 
 
@@ -118,6 +118,8 @@ def uncalib_gaussian_loss(y,loc,std):
             loc: mean
             std: std. dev.
     """
+    y = UpSampling2D(size=(2,2))(y)
+    y = Conv2D(filters=1, kernel_size=2, strides=1, padding="same")(y)
     var = std**2
     total_var = var+1e-3
     loss = (y-loc)**2 / total_var + tf.log(total_var)
@@ -236,9 +238,11 @@ def offset_network(inputs):
         raise ValueError('input shape (%d x %d) must be divisible by 32'%(h,w))
 
     # make vertical blindspot network
-    vert_input = Input([h,w,c])
-    vert_output = u_net(vert_input)
-    vert_model = Model(inputs=vert_input,outputs=vert_output)
+    inpt = Input([h,w,c])
+    # upsample
+    inpt = UpSampling2D(size=(2,2), interpolation="bilinear")(inpt)
+    vert_output = u_net(inpt)
+    vert_model = Model(inputs=inpt,outputs=vert_output)
 
     # run vertical blindspot network on rotated inputs
     stacks = []
