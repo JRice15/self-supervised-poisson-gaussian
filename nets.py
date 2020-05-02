@@ -174,8 +174,6 @@ def u_net(x):
         Each row of output only sees input pixels above that row
     """
 
-    x = Offset2D()(x)
-
     skips = [x]
 
     n = x
@@ -226,8 +224,6 @@ def u_net(x):
     n = conv(n, 96, 'dec_conv1a')
     n = conv(n, 96, 'dec_conv1b')
 
-    n = Offset2D()(n)
-
     return n
 
 def offset_network(inputs):
@@ -240,8 +236,8 @@ def offset_network(inputs):
     # make vertical blindspot network
     inpt = Input([h,w,c])
     # upsample
-    inpt = UpSampling2D(size=(2,2), interpolation="bilinear")(inpt)
-    vert_output = u_net(inpt)
+    upsamped_inpt = UpSampling2D(size=(2,2), interpolation="bilinear")(inpt)
+    vert_output = u_net(upsamped_inpt)
     vert_model = Model(inputs=inpt,outputs=vert_output)
 
     # run vertical blindspot network on rotated inputs
