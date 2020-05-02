@@ -94,7 +94,7 @@ else:
 os.makedirs("results/%s"%experiment_name,exist_ok=True)
 results_path = 'results/%s.tab'%experiment_name
 
-def do_psnr(gt, test, message=""):
+def do_psnr(gt, test, message):
    test = np.squeeze(test*255)
    test = np.clip(test,0,255)
    print(message + " psnr:", peak_signal_noise_ratio(gt, test, data_range=255))
@@ -127,10 +127,10 @@ with open(results_path,'w') as f:
                 do_psnr(gt, full_pseudo_clean, "pseudoclean")
 
                 noise_sigma = np.sqrt( np.maximum(1e-3, a*full_pseudo_clean+b) )
-                stacked_noisesig = np.tile( (a*full_pseudo_clean+b).reshape((1,512,512,1)), (1,1,1,args.components))
-                prior_var = pred[1]**2 - stacked_noisesig**2
+                stacked_total_std = np.tile( (a*full_pseudo_clean+b).reshape((1,512,512,1)), (1,1,1,args.components))
+                prior_var = pred[1]**2 - stacked_total_std**2
                 prior_std = np.sqrt(np.clip(prior_var, 1e-4, None))
-                denoised = gmm_posterior_expected_value(components=args.components, 
+                denoised = gmm_posterior_expected_value(components=args.components,
                                                         mus=pred[0],
                                                         sigs=prior_std,
                                                         weights=pred[2],
