@@ -61,17 +61,18 @@ def denoise_uncalib(y,loc,std,a,b):
     prior_std = prior_var**0.5
     return np.squeeze(gaussian_posterior_mean(y,loc,prior_std,noise_std))
 
-def np_sum_pool(x):
-    axes = [i for i in range(len(x.shape)) if x.shape[i] > 1]
-    if len(axes) < 2:
+def np_sum_pool(x, outshape):
+    x = np.squeeze(x)
+    initial_shape = x.shape
+    if len(x.shape) < 2:
         raise ValueError("Cannot 2D pool shape '{0}'".format(x.shape))
-    axes = axes[:2] # just first two
-    newshape = [x.shape[i]/2 if i in axes else x.shape[i] for i in range(len(x.shape))]
-    new = np.empty(shape=newshape)
-    for i in range(newshape[axes[0]]):
-        for j in range(newshape[axes[1]]):
-            new[i][j] = x[2*i][2*j] + x[2*i][2*j+1] + x[2*i+1][2*j] + x[2*i+1][2*j+1]
-    return new
+    # average sideways
+    x = np.mean(x.reshape([-1, 2]), axis=-1).reshape((initial_shape[0], initial_shape[1]//2))
+    # average up-down
+    new = []
+    for i in range(0, x.shape[0], 2):
+        new.append( (x[i] + x[i+1])/2 )
+    return np.array(new).reshape(outshape)
     
 
 if args.mode == 'mse' or args.mode == 'uncalib':
