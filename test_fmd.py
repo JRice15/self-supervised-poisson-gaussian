@@ -61,6 +61,19 @@ def denoise_uncalib(y,loc,std,a,b):
     prior_std = prior_var**0.5
     return np.squeeze(gaussian_posterior_mean(y,loc,prior_std,noise_std))
 
+def np_sum_pool(x):
+    axes = [i for i in range(len(x.shape)) if x.shape[i] > 1]
+    if len(axes) < 2:
+        raise ValueError("Cannot 2D pool shape '{0}'".format(x.shape))
+    axes = axes[:2] # just first two
+    newshape = [x.shape[i]/2 if i in axes else x.shape[i] for i in range(len(x.shape))]
+    new = np.empty(shape=newshape)
+    for i in range(newshape[axes[0]]):
+        for j in range(newshape[axes[1]]):
+            new[i][j] = x[2*i][2*j] + x[2*i][2*j+1] + x[2*i+1][2*j] + x[2*i+1][2*j+1]
+    return new
+    
+
 if args.mode == 'mse' or args.mode == 'uncalib':
     experiment_name = '%s.%s'%(args.dataset,args.mode)
 else:
@@ -72,10 +85,11 @@ with open(results_path,'w') as f:
     for index,im in enumerate(X):
         pred = model.predict(im.reshape(1,512,512,1))
         
+        # convert back to 512x512
         std_weights = K.softmax(1 / pred[1])
         weighted_locs = pred[0] * std_weights
-        weighted_locs = AveragePooling2D()(weighted_locs) * 4
-        weighted_stds = AveragePooling2D()(pred[1])
+        weighted_locs = np_sum_pool(weighted_locs) # already averaged by softmaxing weights
+        weighted_stds = np_sum_pool(pred[1]) / 4
         pred = [weighted_locs, weighted_stds]
 
         if args.mode == 'uncalib':
