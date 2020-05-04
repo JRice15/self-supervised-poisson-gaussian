@@ -2,6 +2,9 @@ import numpy as np
 import keras.backend as K
 import tensorflow as tf
 
+def p(i, v, i2=""):
+    print(i, i2, K.eval(K.mean(v)))
+
 
 def gmm_posterior_expected_value(components, mus, sigs, weights, z, noisesig):
     """
@@ -30,11 +33,11 @@ def gmm_posterior_expected_value(components, mus, sigs, weights, z, noisesig):
 
         num_term = wt * ( sqr(noisesig) * mu + sqr(sig) * z )
         num_term *= K.exp( -sqr(mu) / (2 * sqr(sig)) )
-        num_term *= K.exp(
-            ( sqr( sqr(noisesig) * mu + sqr(sig) * z ) ) / 
-            ( 2 * sqr(noisesig) * sqr(sig) * (sqr(noisesig) + sqr(sig)) ) 
-        )
         num_term /= K.pow( (sqr(noisesig) + sqr(sig)), 3/2 )
+        exponent = K.clip(
+            ( sqr( sqr(noisesig) * mu + sqr(sig) * z ) ) / 
+            ( 2 * sqr(noisesig) * sqr(sig) * (sqr(noisesig) + sqr(sig)) ), -70, 70)
+        num_term *= K.exp(exponent)
         numerator += num_term
 
         den_term = wt / (K.sqrt( sqr(noisesig) + sqr(sig) ))
@@ -45,27 +48,30 @@ def gmm_posterior_expected_value(components, mus, sigs, weights, z, noisesig):
         denominator += den_term
     
     result = const * numerator / denominator
-    # replace nans with zero
-    result = tf.where(tf.math.is_nan(result), tf.fill(result.shape, 0.0), result)
+    # replace nans with large positive
+    result = tf.where(tf.math.is_nan(result), tf.fill(result.shape, 1e25), result)
     return result
 
 
 def test_gm_expected():
     result = gmm_posterior_expected_value(
-        np.array([ # 3 component mix
-            [ # means
-                [[-30, 70, 20],[400, 20, 20]],
-                 [[50, -20, 20],[200, 0, 20]]
-            ],[ # std devs
-                [[100, 30, 30],[200, 12, 30]], 
-                 [[20, 300, 30],[99, 2, 30]]
-            ],[ # weights
-                [[0.6, 0.4, 0],[0.2, 0.8, 0]],
-                 [[0.5, 0.5, 0],[0.65, 0.35, 0]]
-            ]
-        ]), -710, 50
+        components=3, 
+        mus=tf.constant([
+            [[-30, 70, 20],[400, 20, 20]],
+             [[50, -20, 20],[200, 0, 20]]
+        ]),
+        sigs=tf.constant([
+            [[100, 30, 30],[200, 12, 30]], 
+             [[20, 300, 30],[99, 2, 30]]
+        ]),
+        weights=tf.constant([
+            [[0.6, 0.4, 0],[0.2, 0.8, 0]],
+             [[0.5, 0.5, 0],[0.65, 0.35, 0]]
+        ]),
+        z=-710,
+        noisesig=50
     )
-    print(result)
+    result = K.eval(result)
     expected = -574
     assert (abs(result[0][0] - expected) < 0.001)
     print("success")
