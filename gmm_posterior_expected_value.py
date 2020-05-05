@@ -3,7 +3,7 @@ import keras.backend as K
 import tensorflow as tf
 
 
-def gmm_posterior_expected_value(components, mus, sigs, weights, z, noisesig):
+def gmm_posterior_expected_value(components, mus, vars, weights, z, noisevar):
     """
     Args:
         components: int, number of components
@@ -13,11 +13,9 @@ def gmm_posterior_expected_value(components, mus, sigs, weights, z, noisesig):
         noisesig: float
         z: float
     """
-    sqr = K.square
-    z = K.squeeze(K.cast(z, "float32"), axis=-1)
-
-    # constant factor
-    const = K.exp( -sqr(z) / (2 * sqr(noisesig)) )
+    z = np.squeeze(z.astype("float32"), axis=-1)
+    zsq = z**2
+    const = np.exp(-zsq/(2*noisevar))
 
     # numerator and denominator summations, for each distribution in components
     numerator = 0
@@ -25,28 +23,32 @@ def gmm_posterior_expected_value(components, mus, sigs, weights, z, noisesig):
     for i in range(components):
         # select each component layer
         mu  = mus[:,:,:,i]
-        sig = sigs[:,:,:,i]
+        var = vars[:,:,:,i]
         wt  = weights[:,:,:,i]
 
-        num_term = wt * ( sqr(noisesig) * mu + sqr(sig) * z )
-        num_term *= K.exp( -sqr(mu) / (2 * sqr(sig)) )
-        num_term *= K.exp(
-            ( sqr( sqr(noisesig) * mu + sqr(sig) * z ) ) / 
-            ( 2 * sqr(noisesig) * sqr(sig) * (sqr(noisesig) + sqr(sig)) ) 
-        )
-        num_term /= K.pow( (sqr(noisesig) + sqr(sig)), 3/2 )
+        num_term = np.exp( (noisevar*(2*z-mu)*mu+zsq*var)/(2*noisevar*(noisevar+var)))
+        num_term *= (noisevar*mu+z*var)
+        num_term *= wt
+        num_term /= np.power(noisevar+var,3/2)
         numerator += num_term
 
-        den_term = wt / (K.sqrt( sqr(noisesig) + sqr(sig) ))
-        den_term *= K.exp(
-            -(sqr(mu - z)) / 
-            (2 * (sqr(noisesig) + sqr(sig)))
-        )
+        den_term = np.exp(-((z-mu)**2)/(2*(noisevar+var)))
+        den_term *= wt
+        den_term /= np.sqrt(noisevar+var)
         denominator += den_term
     
-    result = const * numerator / denominator
+    print('mus',np.any(np.isnan(mus)))
+    print('vars',np.any(np.isnan(vars)))
+    print('weights',np.any(np.isnan(weights)))
+    print('const',np.any(np.isnan(const)))
+    print('numerator',np.any(np.isnan(numerator)))
+    print('denominator',np.any(np.isnan(denominator)))
+    print(numerator.shape,denominator.shape,const.shape)
+    result = const * numerator / (denominator+1e-10)
+    print(result.shape)
+     
     # replace nans with zero
-    result = tf.where(tf.math.is_nan(result), tf.fill(result.shape, 0.0), result)
+    #result = tf.where(tf.math.is_nan(result), tf.fill(result.shape, 0.0), result)
     return result
 
 

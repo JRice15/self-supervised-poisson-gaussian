@@ -124,19 +124,18 @@ with open(results_path,'w') as f:
                 denoised = denoise_uncalib(im[None,:,:,:],pred[0],pred[1],a,b)
             else:
                 # Gaussian mixture model
-                do_psnr(gt, full_pseudo_clean, "pseudoclean")
 
-                noise_sigma = np.sqrt( np.maximum(1e-3, a*full_pseudo_clean+b) )
-                stacked_noisesig = np.tile( (a*full_pseudo_clean+b).reshape((1,512,512,1)), (1,1,1,args.components))
-                prior_var = pred[1]**2 - stacked_noisesig**2
-                prior_std = np.sqrt(np.clip(prior_var, 1e-4, None))
-                denoised = gmm_posterior_expected_value(components=args.components, 
-                                                        mus=pred[0],
-                                                        sigs=prior_std,
-                                                        weights=pred[2],
-                                                        z=im[None,:,:,:],
-                                                        noisesig=noise_sigma)
-                denoised = K.eval(denoised)
+                total_var = pred[1]**2
+                noise_var = np.maximum(1e-3, a*full_pseudo_clean+b)
+                prior_var = np.maximum(1e-10,total_var - noise_var[:,:,:,None])
+                denoised = gmm_posterior_expected_value(args.components, 
+                                                        pred[0],
+                                                        prior_var,
+                                                        pred[2],
+                                                        im[None,:,:,:],
+                                                        noise_var)
+                do_psnr(gt, full_pseudo_clean, "pseudoclean")
+                do_psnr(gt, denoised, "denoised")
         else:
             denoised = pred[0]
                  
