@@ -37,15 +37,13 @@ def gmm_posterior_expected_value(components, mus, vars, weights, z, noisevar):
         den_term /= np.sqrt(noisevar+var)
         denominator += den_term
     
-    print('mus',np.any(np.isnan(mus)))
-    print('vars',np.any(np.isnan(vars)))
-    print('weights',np.any(np.isnan(weights)))
-    print('const',np.any(np.isnan(const)))
-    print('numerator',np.any(np.isnan(numerator)))
-    print('denominator',np.any(np.isnan(denominator)))
-    print(numerator.shape,denominator.shape,const.shape)
     result = const * numerator / (denominator+1e-10)
-    print(result.shape)
+    print(numerator.shape,denominator.shape,const.shape,result.shape)
+    terms = [mus,vars,weights,const,numerator,denominator,result]
+    names = ["mus","var","weights","const","numerator","denominator","result"]
+    for i,v in enumerate(terms):
+       if np.any(np.isnan(v)):
+          print("\n> NaN in term '" + names[i] + "'")
      
     # replace nans with zero
     #result = tf.where(tf.math.is_nan(result), tf.fill(result.shape, 0.0), result)
