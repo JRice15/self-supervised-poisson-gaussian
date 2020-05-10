@@ -37,6 +37,7 @@ parser.add_argument('--epoch',type=int,default=300,help='num epochs')
 parser.add_argument('--steps',type=int,default=50,help='steps per epoch')
 parser.add_argument('--lr',type=float,default=0.0003,help='learning rate')
 parser.add_argument('--components',type=int,default=1,help='number of mixture components')
+parser.add_argument('--patience',type=int,default=10,help='ReduceLROnPlateau patience')
 
 args = parser.parse_args()
 
@@ -109,7 +110,7 @@ else:
 
 callbacks = []
 callbacks.append(ModelCheckpoint(filepath=weights_path, monitor='val_loss',save_best_only=1,verbose=1))
-callbacks.append(ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0))
+callbacks.append(ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=args.patience, verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0))
 
 gen = random_crop_generator(X,args.crop,args.batch)
 val_crops = []
