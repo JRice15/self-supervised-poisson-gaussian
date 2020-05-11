@@ -185,7 +185,7 @@ def _pool(x):
   return x
 
 def _vshifted_pool(x):
-  """ Vertically shifted max pooling"""
+    """ Vertically shifted max pooling"""
     x = ReplicationPadding2D([1,0,0,0])(x)
     x = Cropping2D([[0,1],[0,0]])(x)
 
