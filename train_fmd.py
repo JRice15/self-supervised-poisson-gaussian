@@ -38,6 +38,7 @@ parser.add_argument('--steps',type=int,default=50,help='steps per epoch')
 parser.add_argument('--lr',type=float,default=0.0003,help='learning rate')
 parser.add_argument('--components',type=int,default=1,help='number of mixture components')
 parser.add_argument('--patience',type=int,default=10,help='ReduceLROnPlateau patience')
+parser.add_argument('--tag',type=str,default="",help='id tag to add to weights path')
 
 args = parser.parse_args()
 
@@ -102,7 +103,10 @@ os.makedirs('weights',exist_ok=True)
 
 if args.mode == 'uncalib' or args.mode == 'mse':
     if args.components == 1:
-        weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
+        if args.tag == "":
+            weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
+        else:
+            weights_path = 'weights/weights.%s.%s.%s.latest.hdf5'%(args.dataset,args.mode,args.tag)
     else:
         weights_path = 'weights/weights.%s.%s.%dcomponents.latest.hdf5'%(args.dataset,args.mode,args.components)
 else:
