@@ -1,17 +1,19 @@
-import numpy as np
-from keras import Input, utils
-from keras.models import Model
-from keras.layers import (Input, Lambda, Conv2D, LeakyReLU, UpSampling2D, 
-                        MaxPooling2D, ZeroPadding2D, Cropping2D, Concatenate, 
-                        Reshape, GlobalAveragePooling2D, BatchNormalization, 
-                        Add, Subtract, add, Activation, GlobalMaxPooling2D,
-                        Softmax, ReLU)
-from keras.initializers import Constant
 import keras.backend as K
+import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+from keras import Input, utils
+from keras.initializers import Constant
+from keras.layers import (Activation, Add, BatchNormalization, Concatenate,
+                          Conv2D, Cropping2D, GlobalAveragePooling2D,
+                          GlobalMaxPooling2D, Input, Lambda, Layer, LeakyReLU,
+                          MaxPooling2D, ReLU, Reshape, Softmax, Subtract,
+                          UpSampling2D, ZeroPadding2D, add)
+from keras.models import Model
+from keras.activations import sigmoid
 
-from keras.layers import Layer
+from special_paddings import *
+
 
 class GaussianLayer(Layer):
     """ Computes noise std. dev. for Gaussian noise model. """
@@ -460,10 +462,45 @@ def _vertical_blindspot_network(x):
 
 
 
+def vshift_conv_2(x, channels_out, name, kernel_size=3, strides=1, bias=True, pad="reflection"):
+    k = kernel_size//2
 
-def resnet_v2(input):
-    
-    x = 
+    if pad == "reflection":
+        x = ReflectionPadding2D([2*k,k,k,k], name="refpad-"+name)(x)
+    else:
+        x = ZeroPadding2D([[2*k,k],[k,k]], name="zeropad-"+name)(x)
+
+    x = Conv2D(filters=channels_out, kernel_size=kernel_size, strides=strides, 
+            kernel_initializer='he_normal', use_bias=bias, name="conv-"+name)(x)
+    x = Cropping2D([[0,k],[0,0]], name="crop-"+name)(x)
+
+    return x
+
+
+def resnet_v2(inputs, output_channels=1, num_blocks=10, num_channels=16, need_sigmoid=False):
+
+    x = vshift_conv_2(inputs, num_channels, name="initial")
+    x = LeakyReLU(0.2, name="relu-initial")(x)
+
+    for i in range(num_blocks):
+        num = str(i)
+        bypass = x
+
+        x = vshift_conv_2(x, num_channels, name=num+"a")
+        x = BatchNormalization(name="norm-"+num+"a")(x)
+        x = LeakyReLU(0.2, name="relu-"+num)(x)
+        x = vshift_conv_2(x, num_channels, name=num+"b")
+        x = BatchNormalization(name="norm-"+num+"b")(x)
+
+        x = Add(name="add-"+num)([x, bypass])
+
+    x = vshift_conv_2(x, num_channels, name="final-1")
+    x = LeakyReLU(0.2, name="relu-final-1")
+
+    x = vshift_conv_2(x, num_channels, name="final-1")
+    x = Activation("sigmoid")(x) # maybe remove this?
+
+    return x
 
 
 def blindspot_network(inputs):
@@ -576,4 +613,3 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     model.add_loss(loss)
   
     return model
-
