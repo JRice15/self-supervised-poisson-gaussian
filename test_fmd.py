@@ -10,7 +10,7 @@ from imageio import imread, imwrite
 import glob
 from tqdm import trange
 
-from gmm_posterior_expected_value import gmm_posterior_expected_value
+from gmm_argmax import gmm_argmax
 
 import argparse
 
@@ -125,17 +125,9 @@ with open(results_path,'w') as f:
             else:
                 # Gaussian mixture model
 
-                total_var = pred[1]**2
-                noise_var = np.maximum(1e-3, a*full_pseudo_clean+b)
-                prior_var = np.maximum(1e-10,total_var - noise_var[:,:,:,None])
-                denoised = gmm_posterior_expected_value(args.components, 
-                                                        pred[0],
-                                                        prior_var,
-                                                        pred[2],
-                                                        im[None,:,:,:],
-                                                        noise_var)
                 do_psnr(gt, full_pseudo_clean, "pseudoclean")
-                do_psnr(gt, denoised, "denoised")
+                do_psnr(gt, gmm_argmax(pred[0], pred[1], pred[2]), "argmax")
+                denoised = full_pseudo_clean 
         else:
             denoised = pred[0]
                  
