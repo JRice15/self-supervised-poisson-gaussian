@@ -20,6 +20,7 @@ parser.add_argument('--dataset',required=True,help='dataset name e.g. Confocal_M
 parser.add_argument('--mode',default='uncalib',help='noise model: mse, uncalib, gaussian, poisson, poissongaussian')
 parser.add_argument('--reg',type=float,default=0.1,help='regularization weight on prior std. dev.')
 parser.add_argument('--components',type=int,default=1,help='number of mixture components')
+parser.add_argument('--tag',type=str,default="",help='id tag to add to weights path')
 
 args = parser.parse_args()
 
@@ -32,7 +33,10 @@ model = gaussian_blindspot_network((512, 512, 1),'uncalib',components=args.compo
 
 if args.mode == 'uncalib' or args.mode == 'mse':
     if args.components == 1:
-        weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
+        if args.tag == "":
+            weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
+        else:
+            weights_path = 'weights/weights.%s.%s.%s.latest.hdf5'%(args.dataset,args.mode,args.tag)
     else:
         weights_path = 'weights/weights.%s.%s.%dcomponents.latest.hdf5'%(args.dataset,args.mode,args.components)
 else:
@@ -86,6 +90,8 @@ def gmm_sum_weighted_means(locs, weights):
 
 if args.mode == 'mse' or args.mode == 'uncalib':
     experiment_name = '%s.%s'%(args.dataset,args.mode)
+    if args.tag != "":
+        experiment_name += "." + args.tag
     if args.components > 1:
         experiment_name = '%s.%s.%dcomponents'%(args.dataset,args.mode,args.components)
 else:
