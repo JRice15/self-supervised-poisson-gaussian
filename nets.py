@@ -495,10 +495,10 @@ def resnet_v2(inputs, output_channels=1, num_blocks=10, num_channels=16, need_si
         x = Add(name="add-"+num)([x, bypass])
 
     x = vshift_conv_2(x, num_channels, name="final-1")
-    x = LeakyReLU(0.2, name="relu-final-1")
+    x = LeakyReLU(0.2, name="relu-final-1")(x)
 
-    x = vshift_conv_2(x, num_channels, name="final-1")
-    x = Activation("sigmoid")(x) # maybe remove this?
+    x = vshift_conv_2(x, num_channels, name="final-2")
+    x = Activation("sigmoid", name="final-sigmoid")(x) # maybe remove this?
 
     return x
 

@@ -38,7 +38,7 @@ class ReflectionPadding2D(Layer):
 
     def __init__(self, padding=(1, 0, 0, 0), **kwargs):        
         self.padding = tuple(padding)  
-        super(ReplicationPadding2D, self).__init__(**kwargs)    
+        super(ReflectionPadding2D, self).__init__(**kwargs)    
     
     def compute_output_shape(self, input_shape):        
         return (input_shape[0], 
