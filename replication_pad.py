@@ -16,7 +16,7 @@ class ReplicationPadding2D(Layer):
         self.padding = tuple(padding)  
         super(ReplicationPadding2D, self).__init__(**kwargs)    
     
-    def compute_output_shape(self, input_shape):        
+    def compute_output_shape(self, input_shape):
         return (input_shape[0], 
                 input_shape[1] + self.padding[0] + self.padding[1], 
                 input_shape[2] + self.padding[2] + self.padding[3], 
