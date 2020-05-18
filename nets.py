@@ -170,8 +170,8 @@ def _vshifted_conv(x, num_filters, name, activate=True):
     filter_size = [3,3]
     k = filter_size[0]//2
 
-    x = ReplicationPadding2D([2*k,k,k,k])(x)
-    x = Conv2D(filters=num_filters, kernel_size=filter_size, padding='valid', kernel_initializer='he_normal', name=name)(x)
+    x = ReplicationPadding2D([k,0,0,0])(x)
+    x = Conv2D(filters=num_filters, kernel_size=filter_size, padding='same', kernel_initializer='he_normal', name=name)(x)
     x = Cropping2D([[0,k],[0,0]])(x)
     if activate:
         x = LeakyReLU(0.1)(x)
