@@ -466,18 +466,18 @@ def vshift_conv_2(x, channels_out, name, kernel_size=3, strides=1, bias=True, pa
     k = kernel_size//2
 
     if pad == "reflection":
-        x = ReflectionPadding2D([2*k,k,k,k], name="refpad-"+name)(x)
+        x = ReflectionPadding2D([k,0,0,0], name="refpad-"+name)(x)
     else:
-        x = ZeroPadding2D([[2*k,k],[k,k]], name="zeropad-"+name)(x)
+        x = ZeroPadding2D([[k,0],[0,0]], name="zeropad-"+name)(x)
 
-    x = Conv2D(filters=channels_out, kernel_size=kernel_size, strides=strides, padding="valid",
+    x = Conv2D(filters=channels_out, kernel_size=kernel_size, strides=strides, padding="same",
             kernel_initializer='he_normal', use_bias=bias, name="conv-"+name)(x)
     x = Cropping2D([[0,k],[0,0]], name="crop-"+name)(x)
 
     return x
 
 
-def resnet_v2(inputs, output_channels=1, num_blocks=10, num_channels=16, need_sigmoid=True):
+def resnet_v2(inputs, output_channels=1, num_blocks=10, num_channels=16, need_sigmoid=False):
 
     x = vshift_conv_2(inputs, num_channels, name="initial")
     x = LeakyReLU(0.2, name="relu-initial")(x)
