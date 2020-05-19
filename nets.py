@@ -462,7 +462,7 @@ def _vertical_blindspot_network(x):
 
 
 
-def vshift_conv_2(x, channels_out, name, kernel_size=3, strides=1, bias=True, pad="reflection"):
+def vshift_conv_2(x, channels_out, name, kernel_size=3, strides=1, bias=True, pad="zero"):
     k = kernel_size//2
 
     if pad == "reflection":
@@ -477,7 +477,7 @@ def vshift_conv_2(x, channels_out, name, kernel_size=3, strides=1, bias=True, pa
     return x
 
 
-def resnet_v2(inputs, output_channels=1, num_blocks=10, num_channels=16, need_sigmoid=False):
+def resnet_v2(inputs, num_blocks=16, num_channels=48, need_sigmoid=False):
 
     x = vshift_conv_2(inputs, num_channels, name="initial")
     x = LeakyReLU(0.2, name="relu-initial")(x)
