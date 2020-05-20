@@ -101,10 +101,10 @@ model.compile(optimizer=Adam(args.lr))
 
 os.makedirs('weights',exist_ok=True)
 
-experiment_name += '%s.%s'%(args.dataset,args.mode)
+experiment_name = '%s.%s'%(args.dataset,args.mode)
+if args.tag != "":
+    experiment_name += '.%s'%(args.tag)
 if args.mode == 'uncalib' or args.mode == 'mse':
-    if args.tag != "":
-        experiment_name += '.%s'%(args.tag)
     if args.components != 1:
         experiment_name += '.%dcomponents'%(args.components)
 else:
