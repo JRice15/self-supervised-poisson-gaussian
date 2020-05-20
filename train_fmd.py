@@ -101,16 +101,16 @@ model.compile(optimizer=Adam(args.lr))
 
 os.makedirs('weights',exist_ok=True)
 
+experiment_name += '%s.%s'%(args.dataset,args.mode)
 if args.mode == 'uncalib' or args.mode == 'mse':
-    if args.components == 1:
-        if args.tag == "":
-            weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
-        else:
-            weights_path = 'weights/weights.%s.%s.%s.latest.hdf5'%(args.dataset,args.mode,args.tag)
-    else:
-        weights_path = 'weights/weights.%s.%s.%dcomponents.latest.hdf5'%(args.dataset,args.mode,args.components)
+    if args.tag != "":
+        experiment_name += '.%s'%(args.tag)
+    if args.components != 1:
+        experiment_name += '.%dcomponents'%(args.components)
 else:
-    weights_path = 'weights/weights.%s.%s.%0.3f.latest.hdf5'%(args.dataset,args.mode,args.reg)
+    experiment_name += '.%0.3f'%(args.reg)
+
+weights_path = "weights/weights." + experiment_name + ".latest.hdf5"
 
 callbacks = []
 callbacks.append(ModelCheckpoint(filepath=weights_path, monitor='val_loss',save_best_only=1,verbose=1))
