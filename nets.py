@@ -461,20 +461,26 @@ def _vertical_blindspot_network(x):
   return n
 
 
+def pad2(x, k, name, kind="zero"):
+    if kind == "reflection":
+        return ReflectionPadding2D([k,0,0,0], name="refpad-"+name)(x)
+    elif kind == "zero":
+        return ZeroPadding2D([[k,0],[0,0]], name="zeropad-"+name)(x)
+    else:
+        raise ValueError("Bad pad kind")
 
-def vshift_conv_2(x, channels_out, name, kernel_size=3, strides=1, bias=True, pad="zero"):
+def vshift_conv_2(x, channels_out, name, kernel_size=3, strides=1, bias=True):
     k = kernel_size//2
 
-    if pad == "reflection":
-        x = ReflectionPadding2D([k,0,0,0], name="refpad-"+name)(x)
-    else:
-        x = ZeroPadding2D([[k,0],[0,0]], name="zeropad-"+name)(x)
+    x = pad2(x, k, name=name)
 
     x = Conv2D(filters=channels_out, kernel_size=kernel_size, strides=strides, padding="same",
             kernel_initializer='he_normal', use_bias=bias, name="conv-"+name)(x)
+
     x = Cropping2D([[0,k],[0,0]], name="crop-"+name)(x)
 
     return x
+
 
 
 def resnet_v2(inputs, num_blocks=10, num_channels=48, need_sigmoid=False):
@@ -492,15 +498,18 @@ def resnet_v2(inputs, num_blocks=10, num_channels=48, need_sigmoid=False):
         x = vshift_conv_2(x, num_channels, name=num+"b")
         x = BatchNormalization(name="norm-"+num+"b")(x)
 
-        x = Concatenate(axis=3)([x, bypass])
-        # x = Add(name="add-"+num)([x, bypass])
+        # x = Concatenate(axis=3)([x, bypass])
+        x = Add(name="add-"+num)([x, bypass])
 
-    x = vshift_conv_2(x, num_channels, name="final-1")
+    x = vshift_conv_2(x, num_channels, name="final-conv-1")
     x = BatchNormalization(name="norm-final")(x)
 
-    x = vshift_conv_2(x, num_channels, name="final-2")
+    x = vshift_conv_2(x, num_channels, name="final-conv-2")
     if need_sigmoid:
         x = Activation("sigmoid", name="final-sigmoid")(x)
+
+    x = pad2(x, 1, name="final-pad")
+    x = Cropping2D([[0,1],[0,0]], name="final-crop")
 
     return x
 
