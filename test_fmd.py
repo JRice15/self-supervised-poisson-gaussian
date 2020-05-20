@@ -1,18 +1,18 @@
-import numpy as np
-from skimage.metrics import peak_signal_noise_ratio
-from nets import *
-from scipy.optimize import minimize
-
+import argparse
+import glob
 import os
 from os import listdir
 from os.path import join
+
+import numpy as np
 from imageio import imread, imwrite
-import glob
+from scipy.optimize import minimize
+from skimage.metrics import peak_signal_noise_ratio
 from tqdm import trange
 
 from gmm_posterior_expected_value import gmm_posterior_expected_value
-
-import argparse
+from nets import *
+from callback import LogProgress
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--path',required=True,help='path to dataset root')
@@ -105,10 +105,12 @@ def do_psnr(gt, test, message):
    test = np.clip(test,0,255)
    print(message + " psnr:", peak_signal_noise_ratio(gt, test, data_range=255))
 
+logger = LogProgress(experiment_name)
+
 with open(results_path,'w') as f:
     f.write('inputPSNR\tdenoisedPSNR\n')
     for index,im in enumerate(X):
-        pred = model.predict(im.reshape(1,512,512,1))
+        pred = model.predict(im.reshape(1,512,512,1), callbacks=[logger])
 
         if args.mode == 'uncalib':
             # select only pixels above bottom 2% and below top 3% of noisy image
@@ -163,5 +165,6 @@ with open(results_path,'w') as f:
 """ Print averages """
 results = np.loadtxt(results_path,delimiter='\t',skiprows=1)
 print('averages:')
-print(np.mean(results,axis=0))
-
+avgs = np.mean(results,axis=0)
+print(avgs)
+logger.log_psnr(avgs)

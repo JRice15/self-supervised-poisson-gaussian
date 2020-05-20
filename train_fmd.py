@@ -1,21 +1,23 @@
 """ Train network on the Fluorescence Microscopy Dataset (FMD) """ 
 
-import numpy as np
-import skimage
-from nets import *
-
+import argparse
+import glob
 import os
 from os import listdir
 from os.path import join
-from imageio import imread
-import glob
-from tqdm import trange
-
-import argparse
 
 import keras
-from keras import backend as K
+import numpy as np
+import skimage
 import tensorflow as tf
+from imageio import imread
+from keras import backend as K
+from keras.callbacks import LambdaCallback, ModelCheckpoint, ReduceLROnPlateau
+from keras.optimizers import SGD, Adam
+from tqdm import trange
+
+from callback import LogProgress
+from nets import *
 
 np.random.seed(1234)
 tf.set_random_seed(1234)
@@ -92,8 +94,6 @@ def random_crop_generator(data, crop_size, batch_size):
             batch[i] = data[ind,y[i]:y[i]+crop_size,x[i]:x[i]+crop_size]
         yield batch, None
 
-from keras.optimizers import Adam, SGD
-from keras.callbacks import LambdaCallback, ModelCheckpoint, ReduceLROnPlateau
 
 model = gaussian_blindspot_network((args.crop, args.crop, 1),args.mode,args.reg,args.components)
 
@@ -115,6 +115,7 @@ else:
 callbacks = []
 callbacks.append(ModelCheckpoint(filepath=weights_path, monitor='val_loss',save_best_only=1,verbose=1))
 callbacks.append(ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=args.patience, verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0))
+callbacks.append(LogProgress(experiment_name))
 
 gen = random_crop_generator(X,args.crop,args.batch)
 val_crops = []
@@ -131,4 +132,3 @@ history = model.fit_generator(gen,
                               epochs=args.epoch, 
                               verbose=1,
                               callbacks=callbacks)
-
