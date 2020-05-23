@@ -483,7 +483,7 @@ def vshift_conv_2(x, channels_out, name, kernel_size=3, strides=1, bias=True):
 
 
 
-def resnet_v2(inputs, num_blocks=10, num_channels=48, need_sigmoid=False):
+def resnet_v2(inputs, num_blocks=10, num_channels=48, need_sigmoid=True):
 
     x = vshift_conv_2(inputs, num_channels, name="initial")
     x = LeakyReLU(0.2, name="relu-initial")(x)
