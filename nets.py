@@ -483,7 +483,7 @@ def vshift_conv_2(x, channels_out, name, kernel_size=3, strides=1, bias=True):
 
 
 
-def resnet_v2(inputs, num_blocks=10, num_channels=48, need_sigmoid=True):
+def resnet_v2(inputs, num_blocks=10, num_channels=128):
 
     x = vshift_conv_2(inputs, num_channels, name="initial")
     x = LeakyReLU(0.2, name="relu-initial")(x)
@@ -505,8 +505,6 @@ def resnet_v2(inputs, num_blocks=10, num_channels=48, need_sigmoid=True):
     x = BatchNormalization(name="norm-final")(x)
 
     x = vshift_conv_2(x, num_channels, name="final-conv-2")
-    if need_sigmoid:
-        x = Activation("sigmoid", name="final-sigmoid")(x)
 
     x = pad2(x, 1, name="final-pad")
     x = Cropping2D([[0,1],[0,0]], name="final-crop")(x)

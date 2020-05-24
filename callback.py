@@ -33,5 +33,5 @@ class LogProgress(Callback):
             )
 
     def log_psnr(self, results):
-        msg = "\n### PSNR\nNoisy: {0}\nDenoised{1}\n".format(results[0], results[1])
+        msg = "\n### PSNR\nNoisy: {0}\nDenoised: {1}\n".format(results[0], results[1])
         self._do_log(msg)
