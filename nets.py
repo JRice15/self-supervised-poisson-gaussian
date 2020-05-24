@@ -461,7 +461,7 @@ def _vertical_blindspot_network(x):
   return n
 
 
-def pad2(x, k, name, kind="zero"):
+def pad2(x, k, name, kind="reflection"):
     if kind == "reflection":
         return ReflectionPadding2D([k,0,0,0], name="refpad-"+name)(x)
     elif kind == "zero":
