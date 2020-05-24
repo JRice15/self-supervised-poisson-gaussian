@@ -492,10 +492,10 @@ def resnet_v2(inputs, num_blocks=10, num_channels=48):
         num = str(i)
         bypass = x
 
+        x = Dropout(0.1)(x)
         x = vshift_conv_2(x, num_channels, name=num+"a")
         x = BatchNormalization(name="norm-"+num+"a")(x)
         x = LeakyReLU(0.2, name="relu-"+num)(x)
-        x = Dropout(0.4)(x)
         x = vshift_conv_2(x, num_channels, name=num+"b")
         x = BatchNormalization(name="norm-"+num+"b")(x)
 
