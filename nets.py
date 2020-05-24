@@ -8,7 +8,7 @@ from keras.layers import (Activation, Add, BatchNormalization, Concatenate,
                           Conv2D, Cropping2D, GlobalAveragePooling2D,
                           GlobalMaxPooling2D, Input, Lambda, Layer, LeakyReLU,
                           MaxPooling2D, ReLU, Reshape, Softmax, Subtract,
-                          UpSampling2D, ZeroPadding2D, add)
+                          UpSampling2D, ZeroPadding2D, add, Dropout)
 from keras.models import Model
 from keras.activations import sigmoid
 
@@ -495,6 +495,7 @@ def resnet_v2(inputs, num_blocks=10, num_channels=128):
         x = vshift_conv_2(x, num_channels, name=num+"a")
         x = BatchNormalization(name="norm-"+num+"a")(x)
         x = LeakyReLU(0.2, name="relu-"+num)(x)
+        x = Dropout(0.4)(x)
         x = vshift_conv_2(x, num_channels, name=num+"b")
         x = BatchNormalization(name="norm-"+num+"b")(x)
 
