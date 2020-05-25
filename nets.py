@@ -483,7 +483,7 @@ def vshift_conv_2(x, channels_out, name, kernel_size=3, strides=1, bias=True):
 
 
 
-def resnet_v2(inputs, num_blocks=10, num_channels=48):
+def resnet_v2(inputs, num_blocks=16, num_channels=48):
 
     x = vshift_conv_2(inputs, num_channels, name="initial")
     x = LeakyReLU(0.2, name="relu-initial")(x)
@@ -495,7 +495,8 @@ def resnet_v2(inputs, num_blocks=10, num_channels=48):
         x = vshift_conv_2(x, num_channels, name=num+"a")
         x = BatchNormalization(name="norm-"+num+"a")(x)
         x = LeakyReLU(0.2, name="relu-"+num)(x)
-        x = Dropout(0.1)(x)
+        # https://arxiv.org/pdf/1904.03392.pdf
+        # x = Dropout(0.1)(x)
         x = vshift_conv_2(x, num_channels, name=num+"b")
         x = BatchNormalization(name="norm-"+num+"b")(x)
 
