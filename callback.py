@@ -13,6 +13,7 @@ class LogProgress(Callback):
         super().__init__(*args, **kwargs)
         self.log_path = "logs/" + experiment_name + ".md"
         self.experiment_name = experiment_name
+        self.best_val_loss = None
         os.makedirs("logs", exist_ok=True)
         if not for_test:
             with open(self.log_path, "w") as f:
@@ -27,9 +28,11 @@ class LogProgress(Callback):
         self._do_log(msg)
 
     def on_epoch_end(self, epoch, logs=None):
+        if self.best_val_loss is None or self.best_val_loss > logs["val_loss"]:
+            self.best_val_loss = logs["val_loss"]
         if epoch % 10 == 0:
             self._do_log(
-                "E{0}: {1:>10.6f}\n".format(epoch, logs["val_loss"])
+                "E{0}: {1:>10.6f}\n".format(epoch, self.best_val_loss)
             )
 
     def log_psnr(self, results):
