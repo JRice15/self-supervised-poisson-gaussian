@@ -1,17 +1,16 @@
-import numpy as np
-from keras import Input, utils
-from keras.models import Model
-from keras.layers import (Input, Lambda, Conv2D, LeakyReLU, UpSampling2D, 
-                        MaxPooling2D, ZeroPadding2D, Cropping2D, Concatenate, 
-                        Reshape, GlobalAveragePooling2D, BatchNormalization, 
-                        Add, Subtract, add, Activation, GlobalMaxPooling2D,
-                        Softmax, ReLU)
-from keras.initializers import Constant
 import keras.backend as K
+import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+from keras import Input, utils
+from keras.initializers import Constant
+from keras.layers import (Activation, Add, BatchNormalization, Concatenate,
+                          Conv2D, Cropping2D, Dropout, GlobalAveragePooling2D,
+                          GlobalMaxPooling2D, Input, Lambda, Layer, LeakyReLU,
+                          MaxPooling2D, ReLU, Reshape, Softmax, Subtract,
+                          UpSampling2D, ZeroPadding2D, add)
+from keras.models import Model
 
-from keras.layers import Layer
 
 class GaussianLayer(Layer):
     """ Computes noise std. dev. for Gaussian noise model. """
@@ -165,11 +164,13 @@ def _conv(x, num_filters, name):
 
   return x
 
-def _vshifted_conv(x, num_filters, name, activate=True):
+def _vshifted_conv(x, num_filters, name, activate=True, dropout=True):
     """ Vertically shifted convolution """
     filter_size = [3,3]
     k = filter_size[0]//2
 
+    if dropout:
+        x = Dropout(0.1)(x)
     x = ZeroPadding2D([[k,0],[0,0]])(x)
     x = Conv2D(filters=num_filters, kernel_size=filter_size, padding='same', kernel_initializer='he_normal', name=name)(x)
     x = Cropping2D([[0,k],[0,0]])(x)
@@ -568,4 +569,3 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     model.add_loss(loss)
   
     return model
-
