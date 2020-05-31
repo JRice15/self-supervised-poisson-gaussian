@@ -88,14 +88,16 @@ def gmm_sum_weighted_means(locs, weights):
     return np.sum(weighted, axis=-1)
 
 
-if args.mode == 'mse' or args.mode == 'uncalib':
-    experiment_name = '%s.%s'%(args.dataset,args.mode)
-    if args.tag != "":
-        experiment_name += "." + args.tag
-    if args.components > 1:
-        experiment_name = '%s.%s.%dcomponents'%(args.dataset,args.mode,args.components)
+
+experiment_name = '%s.%s'%(args.dataset,args.mode)
+if args.tag != "":
+    experiment_name += '.%s'%(args.tag)
+if args.mode == 'uncalib' or args.mode == 'mse':
+    if args.components != 1:
+        experiment_name += '.%dcomponents'%(args.components)
 else:
-    experiment_name = '%s.%s.%0.3f'%(args.dataset,args.mode,args.reg)
+    experiment_name += '.%0.3f'%(args.reg)
+
     
 os.makedirs("results/%s"%experiment_name,exist_ok=True)
 results_path = 'results/%s.tab'%experiment_name
