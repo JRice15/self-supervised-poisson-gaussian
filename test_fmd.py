@@ -21,6 +21,8 @@ parser.add_argument('--mode',default='uncalib',help='noise model: mse, uncalib, 
 parser.add_argument('--reg',type=float,default=0.1,help='regularization weight on prior std. dev.')
 parser.add_argument('--components',type=int,default=1,help='number of mixture components')
 parser.add_argument('--tag',type=str,default="",help='id tag to add to weights path')
+parser.add_argument('--width',type=int,default=1,help='blindspot width')
+parser.add_argument('--height',type=int,default=1,help='blindspot height')
 
 args = parser.parse_args()
 
@@ -29,18 +31,27 @@ if args.components != 1 and args.mode != "uncalib":
 
 """ Re-create the model and load the weights """
 
-model = gaussian_blindspot_network((512, 512, 1),'uncalib',components=args.components)
+model = gaussian_blindspot_network(
+    (512, 512, 1),
+    args.mode,
+    args.reg,
+    components=args.components,
+    width=args.width,
+    height=args.height
+)
 
+experiment_name = '%s.%s'%(args.dataset,args.mode)
+if args.tag != "":
+    experiment_name += '.%s'%(args.tag)
+if args.width != 1 or args.height != 1:
+    experiment_name += '.%dx%d'%(args.width, args.height)
 if args.mode == 'uncalib' or args.mode == 'mse':
-    if args.components == 1:
-        if args.tag == "":
-            weights_path = 'weights/weights.%s.%s.latest.hdf5'%(args.dataset,args.mode)
-        else:
-            weights_path = 'weights/weights.%s.%s.%s.latest.hdf5'%(args.dataset,args.mode,args.tag)
-    else:
-        weights_path = 'weights/weights.%s.%s.%dcomponents.latest.hdf5'%(args.dataset,args.mode,args.components)
+    if args.components != 1:
+        experiment_name += '.%dcomponents'%(args.components)
 else:
-    weights_path = 'weights/weights.%s.%s.%0.3f.latest.hdf5'%(args.dataset,args.mode,args.reg)
+    experiment_name += '.%0.3f'%(args.reg)
+
+weights_path = "weights/weights." + experiment_name + ".latest.hdf5"
 
 model.load_weights(weights_path)
 
@@ -87,16 +98,6 @@ def gmm_sum_weighted_means(locs, weights):
     weighted = locs * weights
     return np.sum(weighted, axis=-1)
 
-
-
-experiment_name = '%s.%s'%(args.dataset,args.mode)
-if args.tag != "":
-    experiment_name += '.%s'%(args.tag)
-if args.mode == 'uncalib' or args.mode == 'mse':
-    if args.components != 1:
-        experiment_name += '.%dcomponents'%(args.components)
-else:
-    experiment_name += '.%0.3f'%(args.reg)
 
     
 os.makedirs("results/%s"%experiment_name,exist_ok=True)

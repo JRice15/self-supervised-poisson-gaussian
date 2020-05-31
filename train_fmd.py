@@ -100,7 +100,14 @@ def random_crop_generator(data, crop_size, batch_size):
         yield batch, None
 
 
-model = gaussian_blindspot_network((args.crop, args.crop, 1),args.mode,args.reg,args.components)
+model = gaussian_blindspot_network(
+    (args.crop, args.crop, 1),
+    args.mode,
+    args.reg,
+    components=args.components,
+    width=args.width,
+    height=args.height
+)
 
 model.compile(optimizer=Adam(args.lr))
 
@@ -109,6 +116,8 @@ os.makedirs('weights',exist_ok=True)
 experiment_name = '%s.%s'%(args.dataset,args.mode)
 if args.tag != "":
     experiment_name += '.%s'%(args.tag)
+if args.width != 1 or args.height != 1:
+    experiment_name += '.%dx%d'%(args.width, args.height)
 if args.mode == 'uncalib' or args.mode == 'mse':
     if args.components != 1:
         experiment_name += '.%dcomponents'%(args.components)
