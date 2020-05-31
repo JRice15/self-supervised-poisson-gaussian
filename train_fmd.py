@@ -49,7 +49,7 @@ args = parser.parse_args()
 if args.components != 1 and args.mode != "uncalib":
     raise ValueError("Components != 1 must be used with mode uncalib")    
 
-if args.x % 2 != 1 or args.y % 2 != 1:
+if args.width % 2 != 1 or args.height % 2 != 1:
     raise ValueError("Blindspot width and height must be odd integers")
 
 """ Load dataset """

@@ -476,7 +476,7 @@ def blindspot_network(inputs, width, height):
     else:
         horiz_shift = width//2 + 1
         horiz_output = _vertical_blindspot_network(vert_input, horiz_shift)
-        horiz_model = Model(inputs=vert_input,outputs=vert_output)
+        horiz_model = Model(inputs=vert_input,outputs=horiz_output)
     # vert_model = ResNet50(input_tensor=vert_input, input_shape=[h,w,c])
 
     # run vertical blindspot network on rotated inputs
