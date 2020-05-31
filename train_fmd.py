@@ -41,11 +41,16 @@ parser.add_argument('--lr',type=float,default=0.0003,help='learning rate')
 parser.add_argument('--components',type=int,default=1,help='number of mixture components')
 parser.add_argument('--patience',type=int,default=10,help='ReduceLROnPlateau patience')
 parser.add_argument('--tag',type=str,default="",help='id tag to add to weights path')
+parser.add_argument('--width',type=int,default=1,help='blindspot width')
+parser.add_argument('--height',type=int,default=1,help='blindspot height')
 
 args = parser.parse_args()
 
 if args.components != 1 and args.mode != "uncalib":
     raise ValueError("Components != 1 must be used with mode uncalib")    
+
+if args.x % 2 != 1 or args.y % 2 != 1:
+    raise ValueError("Blindspot width and height must be odd integers")
 
 """ Load dataset """
 

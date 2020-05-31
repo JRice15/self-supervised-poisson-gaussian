@@ -399,7 +399,7 @@ def ResNet50(input_tensor,
     return model
 
 
-def _vertical_blindspot_network(x):
+def _vertical_blindspot_network(x, shift=1):
   """ Blind-spot network; adapted from noise2noise GitHub
     Each row of output only sees input pixels above that row
   """
@@ -454,12 +454,12 @@ def _vertical_blindspot_network(x):
   n = _vshifted_conv(n, 96, 'dec_conv1b')
 
   # final pad and crop for blind spot
-  n = ZeroPadding2D([[1,0],[0,0]])(n)
-  n = Cropping2D([[0,1],[0,0]])(n)
+  n = ZeroPadding2D([[shift,0],[0,0]])(n)
+  n = Cropping2D([[0,shift],[0,0]])(n)
 
   return n
 
-def blindspot_network(inputs):
+def blindspot_network(inputs, width, height):
     b,h,w,c = K.int_shape(inputs)
     #if h != w:
         #raise ValueError('input shape must be square')
@@ -468,8 +468,15 @@ def blindspot_network(inputs):
 
     # make vertical blindspot network
     vert_input = Input([h,w,c])
-    vert_output = _vertical_blindspot_network(vert_input)
+    vert_shift = height//2 + 1
+    vert_output = _vertical_blindspot_network(vert_input, vert_shift)
     vert_model = Model(inputs=vert_input,outputs=vert_output)
+    if height == width:
+        horiz_model = vert_model
+    else:
+        horiz_shift = width//2 + 1
+        horiz_output = _vertical_blindspot_network(vert_input, horiz_shift)
+        horiz_model = Model(inputs=vert_input,outputs=vert_output)
     # vert_model = ResNet50(input_tensor=vert_input, input_shape=[h,w,c])
 
     # run vertical blindspot network on rotated inputs
@@ -478,9 +485,10 @@ def blindspot_network(inputs):
         rotated = Lambda(lambda x: tf.image.rot90(x,i))(inputs)
         if i == 0 or i == 2:
             rotated = Reshape([h,w,c])(rotated)
+            out = vert_model(rotated)
         else:
             rotated = Reshape([w,h,c])(rotated)
-        out = vert_model(rotated)
+            out = horiz_model(rotated)
         out = Lambda(lambda x:tf.image.rot90(x,4-i))(out)
         stacks.append(out)
 
@@ -497,7 +505,7 @@ def blindspot_network(inputs):
     return x
 
 
-def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
+def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1,width=1,height=1):
     """ Create a variant of the Gaussian blindspot newtork.
         input_shape: Shape of input image
         mode: mse, uncalib, global, perpixel, poisson
@@ -513,7 +521,7 @@ def gaussian_blindspot_network(input_shape,mode,reg_weight=0,components=1):
     inputs = Input(input_shape)
   
     # run blindspot network
-    x = blindspot_network(inputs)
+    x = blindspot_network(inputs, width, height)
 
     # get prior parameters
     loc = Conv2D(components, 1, kernel_initializer='he_normal', name='loc')(x)
