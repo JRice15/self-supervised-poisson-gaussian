@@ -105,7 +105,7 @@ def do_psnr(gt, test, message):
    test = np.clip(test,0,255)
    print(message + " psnr:", peak_signal_noise_ratio(gt, test, data_range=255))
 
-logger = LogProgress(experiment_name)
+logger = LogProgress(experiment_name, for_test=True)
 
 with open(results_path,'w') as f:
     f.write('inputPSNR\tdenoisedPSNR\n')
