@@ -9,13 +9,15 @@ class LogProgress(Callback):
     logs val loss and psnr
     """
 
-    def __init__(self, experiment_name, *args, **kwargs):
+    def __init__(self, experiment_name, *args, for_test=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.log_path = "logs/" + experiment_name + ".md"
         self.experiment_name = experiment_name
         os.makedirs("logs", exist_ok=True)
-        with open(self.log_path, "w") as f:
-            pass
+        if not for_test:
+            # clear log
+            with open(self.log_path, "w") as f:
+                pass
 
     def _do_log(self, message):
         with open(self.log_path, "a") as f:

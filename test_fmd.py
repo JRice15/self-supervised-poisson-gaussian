@@ -108,7 +108,7 @@ def do_psnr(gt, test, message):
    test = np.clip(test,0,255)
    print(message + " psnr:", peak_signal_noise_ratio(gt, test, data_range=255))
 
-logger = LogProgress(experiment_name)
+logger = LogProgress(experiment_name, for_test=True)
 
 with open(results_path,'w') as f:
     f.write('inputPSNR\tdenoisedPSNR\n')
@@ -129,6 +129,8 @@ with open(results_path,'w') as f:
             res = minimize(optfun, (0.01,0), (np.squeeze(pseudo_clean),np.squeeze(noisy)), method='Nelder-Mead')
             print('bootstrap poisson-gaussian fit: a = %f, b=%f, loss=%f'%(res.x[0],res.x[1],res.fun))
             a,b = res.x
+
+            do_psnr(gt, pred[0], "psuedo-clean")
 
             # run denoising
             if args.components == 1:

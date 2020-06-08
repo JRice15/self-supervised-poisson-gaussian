@@ -56,6 +56,7 @@ if args.width % 2 != 1 or args.height % 2 != 1:
 
 def load_images(noise):
     basepath = args.path + '/' + args.dataset + '/' + noise
+    print(basepath)
     images = []
     for i in range(1,21):
         if i==19: continue
