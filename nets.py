@@ -98,6 +98,11 @@ def uncalib_gaussian_loss(y,loc,std):
             loc: mean
             std: std. dev.
     """
+    # mask out lowest 2% and highest 3%
+    good = tf.logical_and(y >= tfp.stats.percentile(y,2.0), y <= tfp.stats.percentile(y,97.0))
+    loc = tf.boolean_mask(loc, good)
+    std = tf.boolean_mask(std, good)
+    y = tf.boolean_mask(y, good)
     var = std**2
     total_var = var+1e-3
     loss = (y-loc)**2 / total_var + tf.log(total_var)
