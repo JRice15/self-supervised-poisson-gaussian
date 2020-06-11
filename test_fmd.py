@@ -194,6 +194,7 @@ if args.mode == "uncalib":
     all_sqr_errs = np.array(all_sqr_errs)
     avged = np.mean(all_sqr_errs, axis=0)
     avged = normalize(avged)
-    correlation = 255 - (avged - noisy)
-    imwrite("misc/mse-correlation." + experiment_name, correlation)
+    correlation = np.abs(avged - noisy)
+    os.makedirs("misc", exist_ok=True)
+    imwrite("misc/mse-correlation." + experiment_name + ".png", correlation.astype("uint8"))
 
