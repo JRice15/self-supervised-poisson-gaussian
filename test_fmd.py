@@ -109,6 +109,8 @@ def do_psnr(gt, test, message):
 
 logger = LogProgress(experiment_name, for_test=True)
 
+all_sqr_errs = []
+
 with open(results_path,'w') as f:
     f.write('inputPSNR\tdenoisedPSNR\n')
     for index,im in enumerate(X):
@@ -171,6 +173,7 @@ with open(results_path,'w') as f:
             print(sum(low), "low,", high, "high pixels out of", 512*512)
             squared_err = np.square(denoised - noisy)
             print("good:", squared_err[good].mean(), ", low:", squared_err[low].mean(), ", high:", squared_err[high].mean())
+            all_sqr_errs.append(squared_err)
 
 """ Print averages """
 results = np.loadtxt(results_path,delimiter='\t',skiprows=1)
@@ -178,3 +181,17 @@ print('averages:')
 avgs = np.mean(results,axis=0)
 print(avgs)
 logger.log_psnr(avgs)
+
+def normalize(arr):
+    """
+    normalize a an array to range from 0 to 255
+    """
+    arr = arr - np.min(arr)
+    return arr / np.max(arr) * 255
+
+if args.mode == "uncalib":
+    all_sqr_errs = np.array(all_sqr_errs)
+    avged = normalize(avged)
+    correlation = 255 - (avged - noisy)
+    imwrite("misc/mse-correlation." + experiment_name, correlation)
+
