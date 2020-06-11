@@ -170,6 +170,7 @@ with open(results_path,'w') as f:
         if args.mode == "uncalib":
             low = (noisy < np.quantile(noisy, 0.02))
             high = (noisy > np.quantile(noisy, 0.97))
+            good = np.squeeze(good)
             print(np.sum(low), "low,", np.sum(high), "high pixels out of", 512*512)
             squared_err = np.square(denoised - noisy)
             print("good:", squared_err[good].mean(), ", low:", squared_err[low].mean(), ", high:", squared_err[high].mean())
