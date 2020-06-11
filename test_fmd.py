@@ -14,6 +14,9 @@ from gmm_posterior_expected_value import gmm_posterior_expected_value
 from nets import *
 from callback import LogProgress
 
+import matplotlib.pyplot as plt
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--path',required=True,help='path to dataset root')
 parser.add_argument('--dataset',required=True,help='dataset name e.g. Confocal_MICE')
@@ -175,6 +178,9 @@ with open(results_path,'w') as f:
             squared_err = np.square(denoised - noisy)
             print("good:", squared_err[good].mean(), ", low:", squared_err[low].mean(), ", high:", squared_err[high].mean())
             all_sqr_errs.append(squared_err)
+            plt.scatter(noisy.flatten(), squared_err.flatten())
+
+plt.show()
 
 """ Print averages """
 results = np.loadtxt(results_path,delimiter='\t',skiprows=1)
