@@ -175,12 +175,13 @@ with open(results_path,'w') as f:
             high = (noisy > np.quantile(noisy, 0.97))
             good = np.squeeze(good)
             print(np.sum(low), "low,", np.sum(high), "high pixels out of", 512*512)
-            squared_err = np.square(denoised - noisy)
+            squared_err = np.square(denoised - gt)
             print("good:", squared_err[good].mean(), ", low:", squared_err[low].mean(), ", high:", squared_err[high].mean())
             all_sqr_errs.append(squared_err)
-            plt.scatter(noisy.flatten(), squared_err.flatten())
-
-plt.show()
+            plt.yscale("log")
+            plt.scatter(gt.flatten(), squared_err.flatten())
+            plt.savefig("correlation-plt" + str(index) + ".png")
+            plt.clf()
 
 """ Print averages """
 results = np.loadtxt(results_path,delimiter='\t',skiprows=1)
