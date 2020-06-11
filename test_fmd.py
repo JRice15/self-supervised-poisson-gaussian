@@ -147,6 +147,7 @@ with open(results_path,'w') as f:
                                                         z=im[None,:,:,:],
                                                         noisesig=noise_sigma)
                 denoised = K.eval(denoised)
+
         else:
             denoised = pred[0]
                  
@@ -163,6 +164,13 @@ with open(results_path,'w') as f:
 
         print(psnr_noisy,psnr_denoised)
         f.write('%.15f\t%.15f\n'%(psnr_noisy,psnr_denoised))
+
+        if args.mode == "uncalib":
+            low = (noisy < np.quantile(noisy, 0.02))
+            high = (noisy > np.quantile(noisy, 0.97))
+            print(sum(low), "low,", high, "high pixels out of", 512*512)
+            squared_err = np.square(denoised - noisy)
+            print("good:", squared_err[good].mean(), ", low:", squared_err[low].mean(), ", high:", squared_err[high].mean())
 
 """ Print averages """
 results = np.loadtxt(results_path,delimiter='\t',skiprows=1)
