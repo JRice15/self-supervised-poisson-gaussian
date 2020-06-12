@@ -54,7 +54,7 @@ test_images = []
 def load_images(noise):
     basepath = args.path + '/' + args.dataset + '/' + noise
     images = []
-    for path in sorted(glob.glob(basepath + '/*.tif'%i)):
+    for path in sorted(glob.glob(basepath + '/*.tif')):
         images.append(imread(path))
     # only use last 10% for testing
     split = int(len(images) * 9 / 10)

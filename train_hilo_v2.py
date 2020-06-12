@@ -52,7 +52,7 @@ if args.components != 1 and args.mode != "uncalib":
 def load_images(noise):
     basepath = args.path + '/' + args.dataset + '/' + noise
     images = []
-    for path in sorted(glob.glob(basepath + '/*.tif'%i)):
+    for path in sorted(glob.glob(basepath + '/*.tif')):
         images.append(imread(path))
     # save last 10% for testing
     split = int(len(images) * 9 / 10)
@@ -102,7 +102,7 @@ model.compile(optimizer=Adam(args.lr))
 
 os.makedirs('weights',exist_ok=True)
 
-experiment_name = '%s.%s'%(args.dataset,args.mode)
+experiment_name = 'hilo-v2.%s.%s'%(args.dataset,args.mode)
 if args.tag != "":
     experiment_name += '.%s'%(args.tag)
 if args.mode == 'uncalib' or args.mode == 'mse':
