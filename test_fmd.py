@@ -112,7 +112,7 @@ def do_psnr(gt, test, message):
 
 logger = LogProgress(experiment_name, for_test=True)
 
-all_sqr_errs = []
+# all_sqr_errs = []
 
 with open(results_path,'w') as f:
     f.write('inputPSNR\tdenoisedPSNR\n')
@@ -170,18 +170,18 @@ with open(results_path,'w') as f:
         print(psnr_noisy,psnr_denoised)
         f.write('%.15f\t%.15f\n'%(psnr_noisy,psnr_denoised))
 
-        if args.mode == "uncalib":
-            low = (noisy < np.quantile(noisy, 0.02))
-            high = (noisy > np.quantile(noisy, 0.97))
-            good = np.squeeze(good)
-            print(np.sum(low), "low,", np.sum(high), "high pixels out of", 512*512)
-            squared_err = np.square(denoised - gt)
-            print("good:", squared_err[good].mean(), ", low:", squared_err[low].mean(), ", high:", squared_err[high].mean())
-            all_sqr_errs.append(squared_err)
-            plt.yscale("log")
-            plt.scatter(gt.flatten(), squared_err.flatten())
-            plt.savefig("correlation-plt" + str(index) + ".png")
-            plt.clf()
+        # if args.mode == "uncalib":
+        #     low = (noisy < np.quantile(noisy, 0.02))
+        #     high = (noisy > np.quantile(noisy, 0.97))
+        #     good = np.squeeze(good)
+        #     print(np.sum(low), "low,", np.sum(high), "high pixels out of", 512*512)
+        #     squared_err = np.square(denoised - gt)
+        #     print("good:", squared_err[good].mean(), ", low:", squared_err[low].mean(), ", high:", squared_err[high].mean())
+        #     all_sqr_errs.append(squared_err)
+        #     plt.yscale("log")
+        #     plt.scatter(gt.flatten(), squared_err.flatten())
+        #     plt.savefig("correlation-plt" + str(index) + ".png")
+        #     plt.clf()
 
 """ Print averages """
 results = np.loadtxt(results_path,delimiter='\t',skiprows=1)
@@ -190,18 +190,18 @@ avgs = np.mean(results,axis=0)
 print(avgs)
 logger.log_psnr(avgs)
 
-def normalize(arr):
-    """
-    normalize a an array to range from 0 to 255
-    """
-    arr = arr - np.min(arr)
-    return arr / np.max(arr) * 255
+# def normalize(arr):
+#     """
+#     normalize a an array to range from 0 to 255
+#     """
+#     arr = arr - np.min(arr)
+#     return arr / np.max(arr) * 255
 
-if args.mode == "uncalib":
-    all_sqr_errs = np.array(all_sqr_errs)
-    avged = np.mean(all_sqr_errs, axis=0)
-    avged = normalize(avged)
-    correlation = np.abs(avged - noisy)
-    os.makedirs("misc", exist_ok=True)
-    imwrite("misc/mse-correlation." + experiment_name + ".png", correlation.astype("uint8"))
+# if args.mode == "uncalib":
+#     all_sqr_errs = np.array(all_sqr_errs)
+#     avged = np.mean(all_sqr_errs, axis=0)
+#     avged = normalize(avged)
+#     correlation = np.abs(avged - noisy)
+#     os.makedirs("misc", exist_ok=True)
+#     imwrite("misc/mse-correlation." + experiment_name + ".png", correlation.astype("uint8"))
 
