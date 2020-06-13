@@ -32,7 +32,7 @@ if args.components != 1 and args.mode != "uncalib":
 
 """ Re-create the model and load the weights """
 
-model = gaussian_blindspot_network((512, 512, 1),'uncalib',components=args.components)
+model = gaussian_blindspot_network((1024, 1024, 1),'uncalib',components=args.components)
 
 experiment_name = 'hilo-v2.%s.%s'%(args.dataset,args.mode)
 if args.tag != "":
@@ -104,7 +104,7 @@ logger = LogProgress(experiment_name, for_test=True)
 with open(results_path,'w') as f:
     f.write('inputPSNR\tdenoisedPSNR\n')
     for index,im in enumerate(X):
-        pred = model.predict(im.reshape(1,512,512,1), callbacks=[logger])
+        pred = model.predict(im.reshape(1,1024,1024,1), callbacks=[logger])
 
         if args.mode == 'uncalib':
             # select only pixels above bottom 2% and below top 3% of noisy image
@@ -129,7 +129,7 @@ with open(results_path,'w') as f:
                 do_psnr(gt, full_pseudo_clean, "pseudoclean")
 
                 noise_sigma = np.sqrt( np.maximum(1e-3, a*full_pseudo_clean+b) )
-                stacked_total_std = np.tile( (a*full_pseudo_clean+b).reshape((1,512,512,1)), (1,1,1,args.components))
+                stacked_total_std = np.tile( (a*full_pseudo_clean+b).reshape((1,1024,1024,1)), (1,1,1,args.components))
                 prior_var = pred[1]**2 - stacked_total_std**2
                 prior_std = np.sqrt(np.clip(prior_var, 1e-4, None))
                 denoised = gmm_posterior_expected_value(components=args.components,
@@ -161,7 +161,7 @@ with open(results_path,'w') as f:
         #     low = (noisy < np.quantile(noisy, 0.02))
         #     high = (noisy > np.quantile(noisy, 0.97))
         #     good = np.squeeze(good)
-        #     print(np.sum(low), "low,", np.sum(high), "high pixels out of", 512*512)
+        #     print(np.sum(low), "low,", np.sum(high), "high pixels out of", 1024*1024)
         #     squared_err = np.square(denoised - gt)
         #     print("good:", squared_err[good].mean(), ", low:", squared_err[low].mean(), ", high:", squared_err[high].mean())
         #     all_sqr_errs.append(squared_err)
