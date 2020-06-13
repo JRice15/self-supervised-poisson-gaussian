@@ -41,7 +41,6 @@ parser.add_argument('--lr',type=float,default=0.0003,help='learning rate')
 parser.add_argument('--components',type=int,default=1,help='number of mixture components')
 parser.add_argument('--patience',type=int,default=10,help='ReduceLROnPlateau patience')
 parser.add_argument('--tag',type=str,default="",help='id tag to add to weights path')
-parser.add_argument('--skip',type=int,default=0,help="number of epochs to skip before ReduceLROnPlateau begins to work")
 
 args = parser.parse_args()
 

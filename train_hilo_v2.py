@@ -16,7 +16,7 @@ from keras.callbacks import LambdaCallback, ModelCheckpoint, ReduceLROnPlateau
 from keras.optimizers import SGD, Adam
 from tqdm import trange
 
-from callback import LogProgress
+from callback import *
 from nets import *
 
 np.random.seed(1234)
@@ -41,6 +41,7 @@ parser.add_argument('--lr',type=float,default=0.0003,help='learning rate')
 parser.add_argument('--components',type=int,default=1,help='number of mixture components')
 parser.add_argument('--patience',type=int,default=10,help='ReduceLROnPlateau patience')
 parser.add_argument('--tag',type=str,default="",help='id tag to add to weights path')
+parser.add_argument('--delay',type=int,default=0,help="number of epochs to skip before ReduceLROnPlateau begins to work")
 
 args = parser.parse_args()
 
@@ -115,7 +116,7 @@ weights_path = "weights/weights." + experiment_name + ".latest.hdf5"
 
 callbacks = []
 callbacks.append(ModelCheckpoint(filepath=weights_path, monitor='val_loss',save_best_only=1,verbose=1))
-callbacks.append(ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=args.patience, verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0))
+callbacks.append(DelayedReduceLR(skip=args.skip,monitor='val_loss',factor=0.5,patience=args.patience,verbose=1,mode='auto',min_delta=0.0001,cooldown=0,min_lr=0))
 callbacks.append(LogProgress(experiment_name))
 
 gen = random_crop_generator(X,args.crop,args.batch)

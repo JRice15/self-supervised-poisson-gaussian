@@ -37,9 +37,10 @@ class LogProgress(Callback):
         self._do_log(msg)
 
 
-class SpecialReduceLR(ReduceLROnPlateau):
+class DelayedReduceLR(ReduceLROnPlateau):
 
     def __init__(self, skip=0, **kwargs):
+        super().__init__(**kwargs)
         self.skip = skip
 
     def on_epoch_end(self, epoch, logs=None):
