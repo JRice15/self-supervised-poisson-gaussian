@@ -1,4 +1,4 @@
-from keras.callbacks import Callback
+from keras.callbacks import Callback, ReduceLROnPlateau
 import os
 import numpy as np
 
@@ -35,3 +35,14 @@ class LogProgress(Callback):
     def log_psnr(self, results):
         msg = "\n### PSNR\nNoisy: {0}\nDenoised{1}\n".format(results[0], results[1])
         self._do_log(msg)
+
+
+class SpecialReduceLR(ReduceLROnPlateau):
+
+    def __init__(self, skip=0, **kwargs):
+        self.skip = skip
+
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch >= self.skip:
+            super().on_epoch_end(epoch, logs)
+
